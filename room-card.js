@@ -77,7 +77,7 @@ var RoomCard_1;
 const TYPE_COLORS = {
     tv: { active: "#7C4DFF", inactive: "#4A3A7A", icon: "mdi:television" },
     media_player: { active: "#1E88E5", inactive: "#1A3A5C", icon: "mdi:speaker" },
-    climate: { active: "#FF6D00", inactive: "#5C3A1A", icon: "mdi:thermostat" },
+    climate: { active: "#FF6D00", inactive: "#5C3A1A", icon: "mdi:home-thermometer" },
     light: { active: "#FDD835", inactive: "#5C5420", icon: "mdi:lightbulb" },
     smoke_detector: { active: "#EF5350", inactive: "#5C2020", icon: "mdi:smoke-detector-variant" },
 };
@@ -128,7 +128,8 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
         return {
             title: "Living Room",
             icon: "mdi:sofa",
-            icon_color: "var(--state-icon-color)",
+            icon_color: "#ffffff",
+            icon_background_color: "#4A90D9",
             background_color: "var(--card-background-color)",
             active_color: "var(--primary-color)",
             inactive_color: "var(--disabled-text-color)",
@@ -298,7 +299,7 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
         return b `
       <ha-card
         class="room-card"
-        style="--room-bg: ${this._config.background_color}"
+        style="--room-bg: ${this._config.background_color}; --icon-bg: ${this._config.icon_background_color}"
       >
         <div class="card-content">
           ${this._config.title
@@ -306,13 +307,6 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
             : A}
 
           <div class="card-body">
-            <div class="room-icon-area">
-              <ha-icon
-                icon=${this._config.icon || "mdi:home-outline"}
-                style="color: ${this._config.icon_color}"
-              ></ha-icon>
-            </div>
-
             ${hasAnyEntities
             ? b `
                   <div class="entities-area">
@@ -344,6 +338,17 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
             : A}
           </div>
         </div>
+
+        <!-- Room icon circle overlapping bottom-left corner -->
+        <div
+          class="room-icon-circle"
+          style="background: var(--icon-bg, #4A90D9)"
+        >
+          <ha-icon
+            icon=${this._config.icon || "mdi:home-outline"}
+            style="color: ${this._config.icon_color}"
+          ></ha-icon>
+        </div>
       </ha-card>
     `;
     }
@@ -356,7 +361,7 @@ RoomCard.styles = i$3 `
     ha-card.room-card {
       background: var(--room-bg, var(--card-background-color, #1c1c1e));
       border-radius: 28px;
-      overflow: hidden;
+      overflow: visible;
       position: relative;
     }
 
@@ -382,21 +387,27 @@ RoomCard.styles = i$3 `
       min-height: 48px;
     }
 
-    /* Room icon on the left */
-    .room-icon-area {
+    /* Room icon circle overlapping bottom-left corner */
+    .room-icon-circle {
+      position: absolute;
+      bottom: -30px;
+      left: -30px;
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: var(--icon-bg, #4A90D9);
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 56px;
-      height: 56px;
-      border-radius: 16px;
-      background: var(--secondary-background-color, rgba(255, 255, 255, 0.05));
-      flex-shrink: 0;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      z-index: 1;
     }
 
-    .room-icon-area ha-icon {
-      --mdi-icon-size: 28px;
-      color: var(--state-icon-color, #4A90D9);
+    .room-icon-circle ha-icon {
+      --mdi-icon-size: 36px;
+      color: #ffffff;
+      margin-top: 8px;
+      margin-right: 8px;
     }
 
     /* Entities on the right */
@@ -555,8 +566,8 @@ let RoomCardEditor = class RoomCardEditor extends i {
           <div class="section-title">General</div>
           ${this._renderTextField("title", "Title", this._config.title || "")}
           ${this._renderTextField("icon", "Room Icon (e.g. mdi:sofa)", this._config.icon || "")}
-          ${this._renderColorField("icon_color", "Icon Color", this._config.icon_color || "var(--state-icon-color)")}
-          ${this._renderColorField("background_color", "Background Color", this._config.background_color || "var(--card-background-color)")}
+          ${this._renderColorField("icon_color", "Icon Color", this._config.icon_color || "#ffffff")}
+          ${this._renderColorField("icon_background_color", "Icon Background Color", this._config.icon_background_color || "#4A90D9")}
         </div>
 
         <div class="section">
