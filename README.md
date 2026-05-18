@@ -29,7 +29,7 @@ A custom [Home Assistant](https://www.home-assistant.io/) Lovelace card that sho
 
 ### Manual Installation
 
-1. Download `room-card.js` from the [latest release](https://github.com/TheBToby/room-card/releases)
+1. Download `room-card.js` from the [repository root](https://github.com/TheBToby/room-card/blob/main/room-card.js)
 2. Copy it to your `www/community/room-card/` directory
 3. Add the resource to your Lovelace configuration:
    - Go to Settings → Dashboards → Resources → Add Resource
@@ -121,7 +121,7 @@ npm run build
 npm run watch
 ```
 
-The built file will be in `dist/room-card.js`.
+The built file will be `room-card.js` in the project root.
 
 ## License
 

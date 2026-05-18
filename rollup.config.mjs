@@ -4,7 +4,7 @@ import typescript from "@rollup/plugin-typescript";
 export default {
   input: "src/main.ts",
   output: {
-    dir: "dist",
+    dir: ".",
     format: "es",
     sourcemap: false,
     entryFileNames: "room-card.js",

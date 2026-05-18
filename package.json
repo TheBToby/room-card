@@ -2,7 +2,7 @@
   "name": "room-card",
   "version": "1.0.0",
   "description": "A custom Home Assistant card that shows an overview of a room",
-  "main": "dist/room-card.js",
+  "main": "room-card.js",
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c --watch"
