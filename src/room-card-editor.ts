@@ -68,7 +68,7 @@ export class RoomCardEditor extends LitElement implements LovelaceCardEditor {
           ${this._renderTextField("title", "Title", this._config.title || "")}
           ${this._renderTextField("icon", "Room Icon (e.g. mdi:sofa)", this._config.icon || "")}
           ${this._renderColorField("icon_color", "Icon Color", this._config.icon_color || "var(--state-icon-color)")}
-          ${this._renderColorField("background_color", "Background Color", this._config.background_color || "var(--card-background-color)")}
+          <!-- ${this._renderColorField("background_color", "Background Color", this._config.background_color || "var(--card-background-color)")} -->
         </div>
 
         <div class="section">

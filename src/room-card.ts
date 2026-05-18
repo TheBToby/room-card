@@ -6,7 +6,7 @@ import type { HomeAssistant, LovelaceCard, RoomCardConfig, HassEntity } from "./
 const TYPE_COLORS: Record<string, { active: string; inactive: string; icon: string }> = {
   tv: { active: "#7C4DFF", inactive: "#4A3A7A", icon: "mdi:television" },
   media_player: { active: "#1E88E5", inactive: "#1A3A5C", icon: "mdi:speaker" },
-  climate: { active: "#FF6D00", inactive: "#5C3A1A", icon: "mdi:thermostat" },
+  climate: { active: "#FF6D00", inactive: "#5C3A1A", icon: "mdi:home-thermometer" },
   light: { active: "#FDD835", inactive: "#5C5420", icon: "mdi:lightbulb" },
   smoke_detector: { active: "#EF5350", inactive: "#5C2020", icon: "mdi:smoke-detector-variant" },
 };
