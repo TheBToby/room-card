@@ -73,31 +73,39 @@ const t=t=>(e,o)=>{ void 0!==o?o.addInitializer(()=>{customElements.define(t,e);
  */function r(r){return n({...r,state:true,attribute:false})}
 
 var RoomCard_1;
-// Icon defaults for each entity type
-const ENTITY_DEFAULTS = {
-    tv: { icon: "mdi:television", domain: "media_player" },
-    media_player_1: { icon: "mdi:speaker", domain: "media_player" },
-    media_player_2: { icon: "mdi:speaker", domain: "media_player" },
-    climate_1: { icon: "mdi:thermostat", domain: "climate" },
-    climate_2: { icon: "mdi:thermostat", domain: "climate" },
-    light_1: { icon: "mdi:lightbulb", domain: "light" },
-    light_2: { icon: "mdi:lightbulb", domain: "light" },
-    smoke_detector: { icon: "mdi:smoke-detector", domain: "binary_sensor" },
+// Default colors per entity type (Material You inspired)
+const TYPE_COLORS = {
+    tv: { active: "#7C4DFF", inactive: "#4A3A7A", icon: "mdi:television" },
+    media_player: { active: "#1E88E5", inactive: "#1A3A5C", icon: "mdi:speaker" },
+    climate: { active: "#FF6D00", inactive: "#5C3A1A", icon: "mdi:thermostat" },
+    light: { active: "#FDD835", inactive: "#5C5420", icon: "mdi:lightbulb" },
+    smoke_detector: { active: "#EF5350", inactive: "#5C2020", icon: "mdi:smoke-detector-variant" },
 };
+function getTypeKey(entityType) {
+    if (entityType === "tv")
+        return "tv";
+    if (entityType.startsWith("media_player"))
+        return "media_player";
+    if (entityType.startsWith("climate"))
+        return "climate";
+    if (entityType.startsWith("light"))
+        return "light";
+    if (entityType === "smoke_detector")
+        return "smoke_detector";
+    return "light";
+}
 function isActive(entity, type) {
     if (!entity)
         return false;
     const state = entity.state.toLowerCase();
-    switch (type) {
+    const typeKey = getTypeKey(type);
+    switch (typeKey) {
         case "tv":
-        case "media_player_1":
-        case "media_player_2":
-            return !["off", "standby", "idle", "unavailable", "unknown"].includes(state);
-        case "climate_1":
-        case "climate_2":
+        case "media_player":
+            return !["off", "standby", "unavailable", "unknown"].includes(state);
+        case "climate":
             return state !== "off" && state !== "unavailable" && state !== "unknown";
-        case "light_1":
-        case "light_2":
+        case "light":
             return state === "on";
         case "smoke_detector":
             return state === "on";
@@ -109,7 +117,8 @@ function getEntityIcon(entity, type) {
     if (entity?.attributes.icon && typeof entity.attributes.icon === "string") {
         return entity.attributes.icon;
     }
-    return ENTITY_DEFAULTS[type]?.icon || "mdi:circle";
+    const typeKey = getTypeKey(type);
+    return TYPE_COLORS[typeKey]?.icon || "mdi:circle";
 }
 let RoomCard = RoomCard_1 = class RoomCard extends i {
     static async getConfigElement() {
@@ -119,10 +128,15 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
         return {
             title: "Living Room",
             icon: "mdi:sofa",
-            icon_color: "#4A90D9",
-            background_color: "#1C1C1E",
-            active_color: "#4CD964",
-            inactive_color: "#636366",
+            icon_color: "var(--state-icon-color)",
+            background_color: "var(--card-background-color)",
+            active_color: "var(--primary-color)",
+            inactive_color: "var(--disabled-text-color)",
+            tv_color: "#7C4DFF",
+            media_player_color: "#1E88E5",
+            climate_color: "#FF6D00",
+            light_color: "#FDD835",
+            smoke_detector_color: "#EF5350",
         };
     }
     setConfig(config) {
@@ -142,29 +156,33 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
             return undefined;
         return this.hass.states[entityId];
     }
-    _getTempEntity() {
+    _getTempInfo() {
         if (!this.hass || !this._config)
-            return undefined;
+            return {};
         const c1 = this._config.climate_1_entity;
         const c2 = this._config.climate_2_entity;
-        if (c1 && this.hass.states[c1]?.attributes.current_temperature !== undefined) {
-            return this.hass.states[c1];
+        for (const entityId of [c1, c2]) {
+            if (entityId && this.hass.states[entityId]) {
+                const entity = this.hass.states[entityId];
+                const current = entity.attributes.current_temperature;
+                const setpoint = (entity.attributes.temperature ?? entity.attributes.target_temp_high);
+                const unit = entity.attributes.temperature_unit || "°C";
+                if (current !== undefined) {
+                    return { current, setpoint, unit };
+                }
+            }
         }
-        if (c2 && this.hass.states[c2]?.attributes.current_temperature !== undefined) {
-            return this.hass.states[c2];
-        }
-        return undefined;
+        return {};
     }
-    _getHumidityEntity() {
+    _getHumidity() {
         if (!this.hass || !this._config)
             return undefined;
         const c1 = this._config.climate_1_entity;
         const c2 = this._config.climate_2_entity;
-        if (c1 && this.hass.states[c1]?.attributes.current_humidity !== undefined) {
-            return this.hass.states[c1];
-        }
-        if (c2 && this.hass.states[c2]?.attributes.current_humidity !== undefined) {
-            return this.hass.states[c2];
+        for (const entityId of [c1, c2]) {
+            if (entityId && this.hass.states[entityId]?.attributes.current_humidity !== undefined) {
+                return this.hass.states[entityId].attributes.current_humidity;
+            }
         }
         return undefined;
     }
@@ -212,6 +230,15 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
             this._fire("hass-more-info", { entityId });
         }
     }
+    _getTypeColor(type) {
+        const typeKey = getTypeKey(type);
+        const configColor = this._config[`${typeKey}_color`];
+        const defaults = TYPE_COLORS[typeKey] || TYPE_COLORS["light"];
+        return {
+            active: configColor || defaults.active,
+            inactive: defaults.inactive,
+        };
+    }
     _renderEntityCircle(type) {
         if (!this._config)
             return A;
@@ -223,7 +250,8 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
             return A;
         const active = isActive(entity, type);
         const icon = getEntityIcon(entity, type);
-        const color = active ? this._config.active_color : this._config.inactive_color;
+        const colors = this._getTypeColor(type);
+        const color = active ? colors.active : colors.inactive;
         return b `
       <div
         class="entity-circle ${active ? "active" : "inactive"}"
@@ -231,7 +259,24 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
         @click=${(e) => this._handleEntityClick(e, type)}
         @dblclick=${(e) => this._handleEntityDblClick(e, type)}
       >
-        <ha-icon icon=${icon} style="color: ${active ? "#fff" : "#aaa"}"></ha-icon>
+        <ha-icon icon=${icon}></ha-icon>
+      </div>
+    `;
+    }
+    /**
+     * Render a column of entity circles for the same type.
+     * Entities of the same type are stacked vertically.
+     */
+    _renderTypeColumn(types) {
+        const configuredTypes = types.filter((type) => {
+            const eid = this._config[`${type}_entity`];
+            return !!eid;
+        });
+        if (configuredTypes.length === 0)
+            return A;
+        return b `
+      <div class="type-column">
+        ${configuredTypes.map((type) => this._renderEntityCircle(type))}
       </div>
     `;
     }
@@ -239,42 +284,53 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
         if (!this._config || !this.hass) {
             return b `<ha-card><div class="placeholder">Configure Room Card</div></ha-card>`;
         }
-        const tempEntity = this._getTempEntity();
-        const humidityEntity = this._getHumidityEntity();
-        const temperature = tempEntity?.attributes.current_temperature;
-        const humidity = humidityEntity?.attributes.current_humidity;
-        // Collect top row entities (TV, media players) and bottom row entities (climates, lights, smoke)
-        const topRowEntities = ["tv", "media_player_1", "media_player_2"].filter((type) => {
-            const eid = this._config[`${type}_entity`];
-            return !!eid;
-        });
-        const bottomRowEntities = ["climate_1", "climate_2", "light_1", "light_2", "smoke_detector"].filter((type) => {
-            const eid = this._config[`${type}_entity`];
-            return !!eid;
-        });
+        const { current: temperature, setpoint, unit } = this._getTempInfo();
+        const humidity = this._getHumidity();
+        // Define entity type groups (stacked vertically)
+        const typeGroups = [
+            { types: ["tv"], label: "tv" },
+            { types: ["media_player_1", "media_player_2"], label: "media_player" },
+            { types: ["climate_1", "climate_2"], label: "climate" },
+            { types: ["light_1", "light_2"], label: "light" },
+            { types: ["smoke_detector"], label: "smoke_detector" },
+        ];
+        const hasAnyEntities = typeGroups.some((group) => group.types.some((type) => !!this._config[`${type}_entity`]));
         return b `
       <ha-card
         class="room-card"
-        style="--room-bg: ${this._config.background_color}; --icon-color: ${this._config.icon_color}"
+        style="--room-bg: ${this._config.background_color}"
       >
-        ${this._config.title
+        <div class="card-content">
+          ${this._config.title
             ? b `<div class="card-header">${this._config.title}</div>`
             : A}
-        <div class="card-body">
-          <div class="entities-grid">
-            <div class="entity-row">
-              ${topRowEntities.map((type) => this._renderEntityCircle(type))}
+
+          <div class="card-body">
+            <div class="room-icon-area">
+              <ha-icon
+                icon=${this._config.icon || "mdi:home-outline"}
+                style="color: ${this._config.icon_color}"
+              ></ha-icon>
             </div>
-            <div class="entity-row">
-              ${bottomRowEntities.map((type) => this._renderEntityCircle(type))}
-            </div>
+
+            ${hasAnyEntities
+            ? b `
+                  <div class="entities-area">
+                    ${typeGroups.map((group) => this._renderTypeColumn(group.types))}
+                  </div>
+                `
+            : A}
           </div>
+
           <div class="bottom-bar">
             ${temperature !== undefined
             ? b `
                   <div class="sensor-value">
                     <ha-icon icon="mdi:thermometer"></ha-icon>
-                    <span>${temperature}${tempEntity?.attributes.temperature_unit || "°C"}</span>
+                    <span class="temp-current">${temperature}${unit || "°C"}</span>
+                    ${setpoint !== undefined
+                ? b `<span class="temp-setpoint">/ ${setpoint}${unit || "°C"}</span>`
+                : A}
                   </div>
                 `
             : A}
@@ -286,15 +342,6 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
                   </div>
                 `
             : A}
-            ${temperature === undefined && humidity === undefined
-            ? b `<div class="sensor-value placeholder-text">--</div>`
-            : A}
-          </div>
-          <div class="room-icon-container">
-            <ha-icon
-              icon=${this._config.icon || "mdi:home-outline"}
-              style="color: ${this._config.icon_color}"
-            ></ha-icon>
           </div>
         </div>
       </ha-card>
@@ -307,110 +354,140 @@ RoomCard.styles = i$3 `
     }
 
     ha-card.room-card {
-      background: var(--room-bg, #1c1c1e);
-      border-radius: 16px;
+      background: var(--room-bg, var(--card-background-color, #1c1c1e));
+      border-radius: 28px;
       overflow: hidden;
       position: relative;
     }
 
+    .card-content {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
     .card-header {
-      padding: 16px 16px 8px;
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text-primary-color, #fff);
-      letter-spacing: 0.3px;
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--primary-text-color, #fff);
+      letter-spacing: 0.1px;
+      padding-bottom: 0;
     }
 
     .card-body {
-      padding: 8px 16px 12px;
-      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      min-height: 48px;
     }
 
-    .entities-grid {
+    /* Room icon on the left */
+    .room-icon-area {
       display: flex;
-      flex-direction: column;
-      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: var(--secondary-background-color, rgba(255, 255, 255, 0.05));
+      flex-shrink: 0;
     }
 
-    .entity-row {
+    .room-icon-area ha-icon {
+      --mdi-icon-size: 28px;
+      color: var(--state-icon-color, #4A90D9);
+    }
+
+    /* Entities on the right */
+    .entities-area {
       display: flex;
-      gap: 10px;
-      justify-content: flex-start;
+      align-items: flex-end;
+      gap: 12px;
+      justify-content: flex-end;
       flex-wrap: wrap;
     }
 
+    /* Column of same-type entities stacked vertically */
+    .type-column {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+
     .entity-circle {
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      background: var(--circle-color, #636366);
+      width: 44px;
+      height: 44px;
+      border-radius: 22px;
+      background: var(--circle-color, var(--disabled-text-color, #636366));
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: background-color 0.3s ease, transform 0.15s ease, box-shadow 0.3s ease;
+      transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                  transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+                  box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
     }
 
     .entity-circle:hover {
-      transform: scale(1.08);
+      transform: scale(1.06);
+    }
+
+    .entity-circle:active {
+      transform: scale(0.95);
     }
 
     .entity-circle.active {
-      box-shadow: 0 0 8px 2px rgba(76, 217, 100, 0.3);
+      box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.15),
+                  0 0 0 1px rgba(255, 255, 255, 0.05);
     }
 
     .entity-circle.inactive {
-      opacity: 0.6;
+      opacity: 0.5;
     }
 
     .entity-circle ha-icon {
       --mdi-icon-size: 22px;
+      color: #fff;
       display: flex;
     }
 
+    /* Bottom bar with temperature and humidity */
     .bottom-bar {
       display: flex;
-      justify-content: center;
-      gap: 20px;
-      margin-top: 14px;
-      padding-top: 10px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      align-items: center;
+      gap: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--divider-color, rgba(255, 255, 255, 0.08));
     }
 
     .sensor-value {
       display: flex;
       align-items: center;
       gap: 4px;
-      color: var(--text-primary-color, #fff);
-      font-size: 13px;
-      font-weight: 500;
+      color: var(--primary-text-color, #fff);
+      font-size: 14px;
+      font-weight: 400;
     }
 
     .sensor-value ha-icon {
-      --mdi-icon-size: 16px;
+      --mdi-icon-size: 18px;
       color: var(--secondary-text-color, #aaa);
     }
 
-    .placeholder-text {
-      color: var(--disabled-text-color, #666);
+    .temp-current {
+      font-weight: 500;
     }
 
-    .room-icon-container {
-      position: absolute;
-      bottom: 8px;
-      left: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .room-icon-container ha-icon {
-      --mdi-icon-size: 24px;
+    .temp-setpoint {
+      color: var(--secondary-text-color, #aaa);
+      font-size: 13px;
     }
 
     .placeholder {
-      padding: 20px;
+      padding: 24px;
       text-align: center;
       color: var(--disabled-text-color, #666);
     }
@@ -428,19 +505,6 @@ RoomCard = RoomCard_1 = __decorate([
 let RoomCardEditor = class RoomCardEditor extends i {
     setConfig(config) {
         this._config = { ...config };
-        this._loadHelpers();
-    }
-    async _loadHelpers() {
-        if (this._helpers)
-            return;
-        try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const helpers = await window.loadCardHelpers();
-            this._helpers = helpers;
-        }
-        catch {
-            // helpers not available
-        }
     }
     _valueChanged(ev) {
         if (!this._config || !this.hass)
@@ -449,9 +513,6 @@ let RoomCardEditor = class RoomCardEditor extends i {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const getValue = (el) => {
             if (el.tagName === "HA-ENTITY-PICKER") {
-                return el.value;
-            }
-            if (el.tagName === "HA-TEXTFIELD" || el.tagName === "INPUT") {
                 return el.value;
             }
             return el.value;
@@ -474,13 +535,6 @@ let RoomCardEditor = class RoomCardEditor extends i {
             composed: true,
         }));
     }
-    _getEntities(domain) {
-        if (!this.hass)
-            return [];
-        return Object.keys(this.hass.states)
-            .filter((eid) => eid.startsWith(`${domain}.`))
-            .sort();
-    }
     render() {
         if (!this._config || !this.hass) {
             return b `<div class="editor-placeholder">Loading...</div>`;
@@ -501,10 +555,17 @@ let RoomCardEditor = class RoomCardEditor extends i {
           <div class="section-title">General</div>
           ${this._renderTextField("title", "Title", this._config.title || "")}
           ${this._renderTextField("icon", "Room Icon (e.g. mdi:sofa)", this._config.icon || "")}
-          ${this._renderColorField("icon_color", "Icon Color", this._config.icon_color || "#4A90D9")}
-          ${this._renderColorField("background_color", "Background Color", this._config.background_color || "#1C1C1E")}
-          ${this._renderColorField("active_color", "Active Color", this._config.active_color || "#4CD964")}
-          ${this._renderColorField("inactive_color", "Inactive Color", this._config.inactive_color || "#636366")}
+          ${this._renderColorField("icon_color", "Icon Color", this._config.icon_color || "var(--state-icon-color)")}
+          ${this._renderColorField("background_color", "Background Color", this._config.background_color || "var(--card-background-color)")}
+        </div>
+
+        <div class="section">
+          <div class="section-title">Entity Colors</div>
+          ${this._renderColorField("tv_color", "TV Color", this._config.tv_color || "#7C4DFF")}
+          ${this._renderColorField("media_player_color", "Media Player Color", this._config.media_player_color || "#1E88E5")}
+          ${this._renderColorField("climate_color", "Climate Color", this._config.climate_color || "#FF6D00")}
+          ${this._renderColorField("light_color", "Light Color", this._config.light_color || "#FDD835")}
+          ${this._renderColorField("smoke_detector_color", "Smoke Detector Color", this._config.smoke_detector_color || "#EF5350")}
         </div>
 
         <div class="section">
@@ -550,6 +611,8 @@ let RoomCardEditor = class RoomCardEditor extends i {
     `;
     }
     _renderColorField(name, label, value) {
+        // Only show color picker for hex values
+        const isHex = value.startsWith("#");
         return b `
       <div class="color-field">
         <ha-textfield
@@ -560,18 +623,21 @@ let RoomCardEditor = class RoomCardEditor extends i {
           outlined
           class="field"
         ></ha-textfield>
-        <input
-          type="color"
-          .name=${name}
-          .value=${value}
-          @input=${this._valueChanged}
-          class="color-picker"
-        />
+        ${isHex
+            ? b `
+              <input
+                type="color"
+                .name=${name}
+                .value=${value}
+                @input=${this._valueChanged}
+                class="color-picker"
+              />
+            `
+            : A}
       </div>
     `;
     }
     _renderEntityPicker(name, label, domain) {
-        this._getEntities(domain);
         const value = this._config[name];
         return b `
       <ha-entity-picker
@@ -651,9 +717,6 @@ __decorate([
 __decorate([
     r()
 ], RoomCardEditor.prototype, "_config", void 0);
-__decorate([
-    r()
-], RoomCardEditor.prototype, "_helpers", void 0);
 RoomCardEditor = __decorate([
     t("room-card-editor")
 ], RoomCardEditor);

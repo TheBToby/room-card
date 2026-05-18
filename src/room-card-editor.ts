@@ -1,92 +1,14 @@
-import { html, css, LitElement } from "lit";
+import { html, css, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { HomeAssistant, LovelaceCardEditor, RoomCardConfig } from "./types";
-
-interface SchemaEntry {
-  name: string;
-  label: string;
-  type: string;
-  filter?: { domain: string[] };
-  default?: string;
-}
-
-const SCHEMA: SchemaEntry[] = [
-  { name: "title", label: "Title", type: "string", default: "Living Room" },
-  { name: "icon", label: "Room Icon", type: "string", default: "mdi:sofa" },
-  { name: "icon_color", label: "Icon Color", type: "string", default: "#4A90D9" },
-  { name: "background_color", label: "Background Color", type: "string", default: "#1C1C1E" },
-  { name: "active_color", label: "Active Color", type: "string", default: "#4CD964" },
-  { name: "inactive_color", label: "Inactive Color", type: "string", default: "#636366" },
-  {
-    name: "tv_entity",
-    label: "TV Entity",
-    type: "string",
-    filter: { domain: ["media_player"] },
-  },
-  {
-    name: "media_player_1_entity",
-    label: "Sonos / Media Player 1",
-    type: "string",
-    filter: { domain: ["media_player"] },
-  },
-  {
-    name: "media_player_2_entity",
-    label: "Sonos / Media Player 2",
-    type: "string",
-    filter: { domain: ["media_player"] },
-  },
-  {
-    name: "climate_1_entity",
-    label: "Climate 1 Entity",
-    type: "string",
-    filter: { domain: ["climate"] },
-  },
-  {
-    name: "climate_2_entity",
-    label: "Climate 2 Entity",
-    type: "string",
-    filter: { domain: ["climate"] },
-  },
-  {
-    name: "light_1_entity",
-    label: "Light 1 Entity",
-    type: "string",
-    filter: { domain: ["light"] },
-  },
-  {
-    name: "light_2_entity",
-    label: "Light 2 Entity",
-    type: "string",
-    filter: { domain: ["light"] },
-  },
-  {
-    name: "smoke_detector_entity",
-    label: "Smoke Detector Entity",
-    type: "string",
-    filter: { domain: ["binary_sensor"] },
-  },
-];
 
 @customElement("room-card-editor")
 export class RoomCardEditor extends LitElement implements LovelaceCardEditor {
   @property({ attribute: false }) public hass?: HomeAssistant;
   @state() private _config?: RoomCardConfig;
-  @state() private _helpers?: Record<string, unknown>;
 
   public setConfig(config: RoomCardConfig): void {
     this._config = { ...config };
-    this._loadHelpers();
-  }
-
-  private async _loadHelpers(): Promise<void> {
-    if (this._helpers) return;
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const helpers = await (window as any).loadCardHelpers();
-      this._helpers = helpers;
-    } catch {
-      // helpers not available
-    }
   }
 
   private _valueChanged(ev: CustomEvent): void {
@@ -96,9 +18,6 @@ export class RoomCardEditor extends LitElement implements LovelaceCardEditor {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getValue = (el: any) => {
       if (el.tagName === "HA-ENTITY-PICKER") {
-        return el.value;
-      }
-      if (el.tagName === "HA-TEXTFIELD" || el.tagName === "INPUT") {
         return el.value;
       }
       return el.value;
@@ -126,13 +45,6 @@ export class RoomCardEditor extends LitElement implements LovelaceCardEditor {
     );
   }
 
-  private _getEntities(domain: string): string[] {
-    if (!this.hass) return [];
-    return Object.keys(this.hass.states)
-      .filter((eid) => eid.startsWith(`${domain}.`))
-      .sort();
-  }
-
   protected render() {
     if (!this._config || !this.hass) {
       return html`<div class="editor-placeholder">Loading...</div>`;
@@ -155,10 +67,17 @@ export class RoomCardEditor extends LitElement implements LovelaceCardEditor {
           <div class="section-title">General</div>
           ${this._renderTextField("title", "Title", this._config.title || "")}
           ${this._renderTextField("icon", "Room Icon (e.g. mdi:sofa)", this._config.icon || "")}
-          ${this._renderColorField("icon_color", "Icon Color", this._config.icon_color || "#4A90D9")}
-          ${this._renderColorField("background_color", "Background Color", this._config.background_color || "#1C1C1E")}
-          ${this._renderColorField("active_color", "Active Color", this._config.active_color || "#4CD964")}
-          ${this._renderColorField("inactive_color", "Inactive Color", this._config.inactive_color || "#636366")}
+          ${this._renderColorField("icon_color", "Icon Color", this._config.icon_color || "var(--state-icon-color)")}
+          ${this._renderColorField("background_color", "Background Color", this._config.background_color || "var(--card-background-color)")}
+        </div>
+
+        <div class="section">
+          <div class="section-title">Entity Colors</div>
+          ${this._renderColorField("tv_color", "TV Color", this._config.tv_color || "#7C4DFF")}
+          ${this._renderColorField("media_player_color", "Media Player Color", this._config.media_player_color || "#1E88E5")}
+          ${this._renderColorField("climate_color", "Climate Color", this._config.climate_color || "#FF6D00")}
+          ${this._renderColorField("light_color", "Light Color", this._config.light_color || "#FDD835")}
+          ${this._renderColorField("smoke_detector_color", "Smoke Detector Color", this._config.smoke_detector_color || "#EF5350")}
         </div>
 
         <div class="section">
@@ -206,6 +125,8 @@ export class RoomCardEditor extends LitElement implements LovelaceCardEditor {
   }
 
   private _renderColorField(name: string, label: string, value: string) {
+    // Only show color picker for hex values
+    const isHex = value.startsWith("#");
     return html`
       <div class="color-field">
         <ha-textfield
@@ -216,19 +137,22 @@ export class RoomCardEditor extends LitElement implements LovelaceCardEditor {
           outlined
           class="field"
         ></ha-textfield>
-        <input
-          type="color"
-          .name=${name}
-          .value=${value}
-          @input=${this._valueChanged}
-          class="color-picker"
-        />
+        ${isHex
+          ? html`
+              <input
+                type="color"
+                .name=${name}
+                .value=${value}
+                @input=${this._valueChanged}
+                class="color-picker"
+              />
+            `
+          : nothing}
       </div>
     `;
   }
 
   private _renderEntityPicker(name: string, label: string, domain: string) {
-    const entities = this._getEntities(domain);
     const value = (this._config as Record<string, unknown>)[name] as string | undefined;
 
     return html`

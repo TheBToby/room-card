@@ -45,10 +45,13 @@ Add the card via the Home Assistant UI editor or use YAML:
 type: custom:room-card
 title: Living Room
 icon: mdi:sofa
-icon_color: "#4A90D9"
-background_color: "#1C1C1E"
-active_color: "#4CD964"
-inactive_color: "#636366"
+icon_color: "var(--state-icon-color)"
+background_color: "var(--card-background-color)"
+tv_color: "#7C4DFF"
+media_player_color: "#1E88E5"
+climate_color: "#FF6D00"
+light_color: "#FDD835"
+smoke_detector_color: "#EF5350"
 tv_entity: media_player.living_room_tv
 media_player_1_entity: media_player.sonos_living_room
 media_player_2_entity: media_player.sonos_kitchen
@@ -66,10 +69,15 @@ smoke_detector_entity: binary_sensor.living_room_smoke
 | `type` | string | ✅ | - | Must be `custom:room-card` |
 | `title` | string | ❌ | `"Living Room"` | Card title |
 | `icon` | string | ❌ | `"mdi:sofa"` | Room icon (Material Design Icons) |
-| `icon_color` | string | ❌ | `"#4A90D9"` | Color of the room icon |
-| `background_color` | string | ❌ | `"#1C1C1E"` | Card background color |
-| `active_color` | string | ❌ | `"#4CD964"` | Color for active entities |
-| `inactive_color` | string | ❌ | `"#636366"` | Color for inactive entities |
+| `icon_color` | string | ❌ | `var(--state-icon-color)` | Color of the room icon |
+| `background_color` | string | ❌ | `var(--card-background-color)` | Card background color |
+| `active_color` | string | ❌ | `var(--primary-color)` | Default color for active entities |
+| `inactive_color` | string | ❌ | `var(--disabled-text-color)` | Default color for inactive entities |
+| `tv_color` | string | ❌ | `"#7C4DFF"` | Active color for TV entities (purple) |
+| `media_player_color` | string | ❌ | `"#1E88E5"` | Active color for media player entities (blue) |
+| `climate_color` | string | ❌ | `"#FF6D00"` | Active color for climate entities (orange) |
+| `light_color` | string | ❌ | `"#FDD835"` | Active color for light entities (yellow) |
+| `smoke_detector_color` | string | ❌ | `"#EF5350"` | Active color for smoke detector entities (red) |
 | `tv_entity` | string | ❌ | - | TV media player entity ID |
 | `media_player_1_entity` | string | ❌ | - | First Sonos/media player entity ID |
 | `media_player_2_entity` | string | ❌ | - | Second Sonos/media player entity ID |
@@ -82,17 +90,22 @@ smoke_detector_entity: binary_sensor.living_room_smoke
 ## Card Layout
 
 ```
-┌─────────────────────────────────┐
-│  Title                          │
-│                                 │
-│  📺  🔊  🔊                    │  ← Top row: TV, Media Players
-│                                 │
-│  🌡️  🌡️  💡  💡  🔥           │  ← Bottom row: Climate, Lights, Smoke
-│                                 │
-│  ─────────────────────────────  │
-│  🏠     🌡 22°C    💧 45%      │  ← Room icon + Temperature + Humidity
-└─────────────────────────────────┘
+┌─────────────────────────────────────┐
+│  Title                              │
+│                                     │
+│  🏠          📺  🔊🔊  🌡️🌡️  💡💡  🔥  │  ← Icon left, entities right (stacked by type)
+│                                     │
+│  ─────────────────────────────────  │
+│  🌡 22°C / 21°C        💧 45%      │  ← Current temp / setpoint + Humidity
+└─────────────────────────────────────┘
 ```
+
+Each entity type has its own color (Material You inspired):
+- 📺 TV: Purple (`#7C4DFF`)
+- 🔊 Media Players: Blue (`#1E88E5`)
+- 🌡️ Climate: Orange (`#FF6D00`)
+- 💡 Lights: Yellow (`#FDD835`)
+- 🔥 Smoke Detector: Red (`#EF5350`)
 
 ## Interactions
 
