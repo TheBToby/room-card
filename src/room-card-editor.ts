@@ -63,7 +63,72 @@ export class RoomCardEditor extends LitElement implements LovelaceCardEditor {
 
     return html`
       <div class="editor">
-        <div class="section">
+      <ha-form
+        .hass=${this.hass}
+        .data=${{ style: 'full', variant: 'default', ...this._config }}
+        .schema=${[
+          {
+            type: 'grid',
+            name: '',
+            flatten: true,
+            schema: [
+              {
+                name: 'area',
+                required: true,
+                selector: { area: {} },
+              },
+              {
+                name: 'color',
+                selector: { color_rgb: {} },
+              },
+            ],
+          },
+          {
+            type: 'grid',
+            name: '',
+            flatten: true,
+            schema: [
+              {
+                name: 'style',
+                default: 'full',
+                selector: {
+                  select: {
+                    mode: 'dropdown',
+                    options: [
+                      { label: 'Full', value: 'full' },
+                      { label: 'Header', value: 'header' },
+                    ],
+                  },
+                },
+              },
+              {
+                name: 'variant',
+                default: 'default',
+                selector: {
+                  select: {
+                    mode: 'dropdown',
+                    options: [
+                      { label: 'Default', value: 'default' },
+                      { label: 'Compact', value: 'compact' },
+                      { label: 'Mini', value: 'mini' },
+                    ],
+                  },
+                },
+              },
+            ],
+          },
+        ]}
+        .computeLabel=${(schema: any) => {
+          const labels = {
+            area: 'config.area',
+            style: 'config.style',
+            variant: 'config.variant',
+            color: 'config.color',
+          }
+        }}
+        @value-changed=${this._valueChanged}
+      ></ha-form>
+      <div class="section">
           <div class="section-title">General</div>
           ${this._renderTextField("title", "Title", this._config.title || "")}
           ${this._renderTextField("icon", "Room Icon (e.g. mdi:sofa)", this._config.icon || "")}
