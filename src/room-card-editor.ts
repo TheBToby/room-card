@@ -1,4 +1,4 @@
-import { html, css, LitElement, nothing } from "lit";
+import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { HomeAssistant, LovelaceCardEditor, RoomCardConfig } from "./types";
 
@@ -14,27 +14,7 @@ export class RoomCardEditor extends LitElement implements LovelaceCardEditor {
   private _valueChanged(ev: CustomEvent): void {
     if (!this._config || !this.hass) return;
 
-    const target = ev.target as HTMLElement;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const getValue = (el: any) => {
-      if (el.tagName === "HA-ENTITY-PICKER") {
-        return el.value;
-      }
-      return el.value;
-    };
-
-    const value = getValue(target);
-    const name = (target as HTMLElement & { name?: string }).name;
-
-    if (!name) return;
-
-    const newConfig = { ...this._config };
-    if (value === "" || value === undefined) {
-      delete (newConfig as Record<string, unknown>)[name];
-    } else {
-      (newConfig as Record<string, unknown>)[name] = value;
-    }
-
+    const newConfig = { ...this._config, ...ev.detail.value } as RoomCardConfig;
     this._config = newConfig;
     this.dispatchEvent(
       new CustomEvent("config-changed", {
@@ -47,191 +27,209 @@ export class RoomCardEditor extends LitElement implements LovelaceCardEditor {
 
   protected render() {
     if (!this._config || !this.hass) {
-      return html`<div class="editor-placeholder">Loading...</div>`;
+      return nothing;
     }
-
-    const entityFields = [
-      { key: "tv_entity", label: "TV Entity", domain: "media_player" },
-      { key: "media_player_1_entity", label: "Sonos / Media Player 1", domain: "media_player" },
-      { key: "media_player_2_entity", label: "Sonos / Media Player 2", domain: "media_player" },
-      { key: "climate_1_entity", label: "Climate 1 Entity", domain: "climate" },
-      { key: "climate_2_entity", label: "Climate 2 Entity", domain: "climate" },
-      { key: "light_1_entity", label: "Light 1 Entity", domain: "light" },
-      { key: "light_2_entity", label: "Light 2 Entity", domain: "light" },
-      { key: "smoke_detector_entity", label: "Smoke Detector Entity", domain: "binary_sensor" },
-    ];
 
     return html`
       <div class="editor">
-      <ha-form
-        .hass=${this.hass}
-        .data=${{ style: 'full', variant: 'default', ...this._config }}
-        .schema=${[
-          {
-            type: 'grid',
-            name: '',
-            flatten: true,
-            schema: [
-              {
-                name: 'area',
-                required: true,
-                selector: { area: {} },
-              },
-              {
-                name: 'color',
-                selector: { color_rgb: {} },
-              },
-            ],
-          },
-          {
-            type: 'grid',
-            name: '',
-            flatten: true,
-            schema: [
-              {
-                name: 'style',
-                default: 'full',
-                selector: {
-                  select: {
-                    mode: 'dropdown',
-                    options: [
-                      { label: 'Full', value: 'full' },
-                      { label: 'Header', value: 'header' },
-                    ],
-                  },
+        <ha-form
+          .hass=${this.hass}
+          .data=${this._config}
+          .schema=${[
+            {
+              type: "grid",
+              name: "",
+              flatten: true,
+              schema: [
+                {
+                  name: "title",
+                  selector: { text: {} },
                 },
+                {
+                  name: "icon",
+                  selector: { icon: {} },
+                },
+              ],
+            },
+            {
+              type: "grid",
+              name: "",
+              flatten: true,
+              schema: [
+                {
+                  name: "icon_color",
+                  selector: { color_rgb: {} },
+                },
+                {
+                  name: "icon_background_color",
+                  selector: { color_rgb: {} },
+                },
+              ],
+            },
+          ]}
+          .computeLabel=${(schema: { name?: string }) => {
+            const labels: Record<string, string> = {
+              title: "Title",
+              icon: "Room Icon",
+              icon_color: "Icon Color",
+              icon_background_color: "Icon Background",
+            };
+            return labels[schema.name || ""] || schema.name || "";
+          }}
+          @value-changed=${this._valueChanged}
+        ></ha-form>
+
+        <div class="section">
+          <h3>Entity Colors</h3>
+          <ha-form
+            .hass=${this.hass}
+            .data=${this._config}
+            .schema=${[
+              {
+                type: "grid",
+                name: "",
+                flatten: true,
+                schema: [
+                  { name: "tv_color", selector: { color_rgb: {} } },
+                  { name: "media_player_color", selector: { color_rgb: {} } },
+                ],
               },
               {
-                name: 'variant',
-                default: 'default',
-                selector: {
-                  select: {
-                    mode: 'dropdown',
-                    options: [
-                      { label: 'Default', value: 'default' },
-                      { label: 'Compact', value: 'compact' },
-                      { label: 'Mini', value: 'mini' },
-                    ],
-                  },
-                },
+                type: "grid",
+                name: "",
+                flatten: true,
+                schema: [
+                  { name: "climate_color", selector: { color_rgb: {} } },
+                  { name: "light_color", selector: { color_rgb: {} } },
+                ],
               },
-            ],
-          },
-        ]}
-        .computeLabel=${(schema: any) => {
-          const labels = {
-            area: 'config.area',
-            style: 'config.style',
-            variant: 'config.variant',
-            color: 'config.color',
-          }
-        }}
-        @value-changed=${this._valueChanged}
-      ></ha-form>
-      <div class="section">
-          <div class="section-title">General</div>
-          ${this._renderTextField("title", "Title", this._config.title || "")}
-          ${this._renderTextField("icon", "Room Icon (e.g. mdi:sofa)", this._config.icon || "")}
-          ${this._renderColorField("icon_color", "Icon Color", this._config.icon_color || "#ffffff")}
-          ${this._renderColorField("icon_background_color", "Icon Background Color", this._config.icon_background_color || "#4A90D9")}
+              {
+                type: "grid",
+                name: "",
+                flatten: true,
+                schema: [
+                  { name: "smoke_detector_color", selector: { color_rgb: {} } },
+                ],
+              },
+            ]}
+            .computeLabel=${(schema: { name?: string }) => {
+              const labels: Record<string, string> = {
+                tv_color: "TV",
+                media_player_color: "Media Player",
+                climate_color: "Climate",
+                light_color: "Light",
+                smoke_detector_color: "Smoke Detector",
+              };
+              return labels[schema.name || ""] || schema.name || "";
+            }}
+            @value-changed=${this._valueChanged}
+          ></ha-form>
         </div>
 
         <div class="section">
-          <div class="section-title">Entity Colors</div>
-          ${this._renderColorField("tv_color", "TV Color", this._config.tv_color || "#7C4DFF")}
-          ${this._renderColorField("media_player_color", "Media Player Color", this._config.media_player_color || "#1E88E5")}
-          ${this._renderColorField("climate_color", "Climate Color", this._config.climate_color || "#FF6D00")}
-          ${this._renderColorField("light_color", "Light Color", this._config.light_color || "#FDD835")}
-          ${this._renderColorField("smoke_detector_color", "Smoke Detector Color", this._config.smoke_detector_color || "#EF5350")}
+          <h3>Media</h3>
+          <ha-form
+            .hass=${this.hass}
+            .data=${this._config}
+            .schema=${[
+              {
+                name: "tv_entity",
+                selector: { entity: { domain: "media_player" } },
+              },
+              {
+                name: "media_player_1_entity",
+                selector: { entity: { domain: "media_player" } },
+              },
+              {
+                name: "media_player_2_entity",
+                selector: { entity: { domain: "media_player" } },
+              },
+            ]}
+            .computeLabel=${(schema: { name?: string }) => {
+              const labels: Record<string, string> = {
+                tv_entity: "TV",
+                media_player_1_entity: "Media Player 1",
+                media_player_2_entity: "Media Player 2",
+              };
+              return labels[schema.name || ""] || schema.name || "";
+            }}
+            @value-changed=${this._valueChanged}
+          ></ha-form>
         </div>
 
         <div class="section">
-          <div class="section-title">Media</div>
-          ${entityFields
-            .filter((e) => ["tv_entity", "media_player_1_entity", "media_player_2_entity"].includes(e.key))
-            .map((e) => this._renderEntityPicker(e.key, e.label, e.domain))}
+          <h3>Climate</h3>
+          <ha-form
+            .hass=${this.hass}
+            .data=${this._config}
+            .schema=${[
+              {
+                name: "climate_1_entity",
+                selector: { entity: { domain: "climate" } },
+              },
+              {
+                name: "climate_2_entity",
+                selector: { entity: { domain: "climate" } },
+              },
+            ]}
+            .computeLabel=${(schema: { name?: string }) => {
+              const labels: Record<string, string> = {
+                climate_1_entity: "Climate 1",
+                climate_2_entity: "Climate 2",
+              };
+              return labels[schema.name || ""] || schema.name || "";
+            }}
+            @value-changed=${this._valueChanged}
+          ></ha-form>
         </div>
 
         <div class="section">
-          <div class="section-title">Climate</div>
-          ${entityFields
-            .filter((e) => e.key.startsWith("climate"))
-            .map((e) => this._renderEntityPicker(e.key, e.label, e.domain))}
+          <h3>Lights</h3>
+          <ha-form
+            .hass=${this.hass}
+            .data=${this._config}
+            .schema=${[
+              {
+                name: "light_1_entity",
+                selector: { entity: { domain: "light" } },
+              },
+              {
+                name: "light_2_entity",
+                selector: { entity: { domain: "light" } },
+              },
+            ]}
+            .computeLabel=${(schema: { name?: string }) => {
+              const labels: Record<string, string> = {
+                light_1_entity: "Light 1",
+                light_2_entity: "Light 2",
+              };
+              return labels[schema.name || ""] || schema.name || "";
+            }}
+            @value-changed=${this._valueChanged}
+          ></ha-form>
         </div>
 
         <div class="section">
-          <div class="section-title">Lights</div>
-          ${entityFields
-            .filter((e) => e.key.startsWith("light"))
-            .map((e) => this._renderEntityPicker(e.key, e.label, e.domain))}
-        </div>
-
-        <div class="section">
-          <div class="section-title">Safety</div>
-          ${entityFields
-            .filter((e) => e.key.startsWith("smoke"))
-            .map((e) => this._renderEntityPicker(e.key, e.label, e.domain))}
+          <h3>Safety</h3>
+          <ha-form
+            .hass=${this.hass}
+            .data=${this._config}
+            .schema=${[
+              {
+                name: "smoke_detector_entity",
+                selector: { entity: { domain: "binary_sensor" } },
+              },
+            ]}
+            .computeLabel=${(schema: { name?: string }) => {
+              const labels: Record<string, string> = {
+                smoke_detector_entity: "Smoke Detector",
+              };
+              return labels[schema.name || ""] || schema.name || "";
+            }}
+            @value-changed=${this._valueChanged}
+          ></ha-form>
         </div>
       </div>
-    `;
-  }
-
-  private _renderTextField(name: string, label: string, value: string) {
-    return html`
-      <ha-textfield
-        .name=${name}
-        .label=${label}
-        .value=${value}
-        @change=${this._valueChanged}
-        outlined
-        class="field"
-      ></ha-textfield>
-    `;
-  }
-
-  private _renderColorField(name: string, label: string, value: string) {
-    // Only show color picker for hex values
-    const isHex = value.startsWith("#");
-    return html`
-      <div class="color-field">
-        <ha-textfield
-          .name=${name}
-          .label=${label}
-          .value=${value}
-          @change=${this._valueChanged}
-          outlined
-          class="field"
-        ></ha-textfield>
-        ${isHex
-          ? html`
-              <input
-                type="color"
-                .name=${name}
-                .value=${value}
-                @input=${this._valueChanged}
-                class="color-picker"
-              />
-            `
-          : nothing}
-      </div>
-    `;
-  }
-
-  private _renderEntityPicker(name: string, label: string, domain: string) {
-    const value = (this._config as Record<string, unknown>)[name] as string | undefined;
-
-    return html`
-      <ha-entity-picker
-        .hass=${this.hass}
-        .name=${name}
-        .value=${value || ""}
-        .label=${label}
-        .includeDomains=${[domain]}
-        @value-changed=${this._valueChanged}
-        allow-custom-entity
-        outlined
-        class="field"
-      ></ha-entity-picker>
     `;
   }
 
@@ -241,55 +239,22 @@ export class RoomCardEditor extends LitElement implements LovelaceCardEditor {
     }
 
     .editor {
-      padding: 12px;
       display: flex;
       flex-direction: column;
       gap: 16px;
     }
 
     .section {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .section-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--primary-text-color);
-      padding-bottom: 4px;
-      border-bottom: 1px solid var(--divider-color);
-      margin-bottom: 4px;
-    }
-
-    .field {
-      width: 100%;
-    }
-
-    .color-field {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .color-field .field {
-      flex: 1;
-    }
-
-    .color-picker {
-      width: 40px;
-      height: 40px;
-      border: none;
+      border: 1px solid var(--divider-color);
       border-radius: 8px;
-      cursor: pointer;
-      padding: 2px;
-      background: transparent;
+      padding: 16px;
     }
 
-    .editor-placeholder {
-      padding: 20px;
-      text-align: center;
-      color: var(--disabled-text-color);
+    .section h3 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--primary-text-color);
     }
   `;
 }

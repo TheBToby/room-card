@@ -1,14 +1,14 @@
-import { html, css, LitElement, nothing } from "lit";
+import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { HomeAssistant, LovelaceCard, RoomCardConfig, HassEntity } from "./types";
 
 // Default colors per entity type (Material You inspired)
 const TYPE_COLORS: Record<string, { active: string; inactive: string; icon: string }> = {
-  tv: { active: "#7C4DFF", inactive: "#4A3A7A", icon: "mdi:television" },
-  media_player: { active: "#1E88E5", inactive: "#1A3A5C", icon: "mdi:speaker" },
-  climate: { active: "#FF6D00", inactive: "#5C3A1A", icon: "mdi:home-thermometer" },
-  light: { active: "#FDD835", inactive: "#5C5420", icon: "mdi:lightbulb" },
-  smoke_detector: { active: "#EF5350", inactive: "#5C2020", icon: "mdi:smoke-detector-variant" },
+  tv: { active: "#7C4DFF", inactive: "#B8A9E0", icon: "mdi:television" },
+  media_player: { active: "#1E88E5", inactive: "#90C5F5", icon: "mdi:speaker" },
+  climate: { active: "#FF6D00", inactive: "#FFB97A", icon: "mdi:home-thermometer" },
+  light: { active: "#FDD835", inactive: "#C5C099", icon: "mdi:lightbulb" },
+  smoke_detector: { active: "#EF5350", inactive: "#E0A8A7", icon: "mdi:smoke-detector-variant" },
 };
 
 function getTypeKey(entityType: string): string {
@@ -47,6 +47,19 @@ function getEntityIcon(entity: HassEntity | undefined, type: string): string {
   return TYPE_COLORS[typeKey]?.icon || "mdi:circle";
 }
 
+/**
+ * Convert a color value to a CSS string.
+ * Handles hex strings and [r, g, b] arrays (from HA color_rgb selector).
+ */
+function colorToCSS(color: string | number[] | undefined, fallback: string): string {
+  if (!color) return fallback;
+  if (typeof color === "string") return color;
+  if (Array.isArray(color) && color.length >= 3) {
+    return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+  }
+  return fallback;
+}
+
 @customElement("room-card")
 export class RoomCard extends LitElement implements LovelaceCard {
   @property({ attribute: false }) public hass?: HomeAssistant;
@@ -62,9 +75,6 @@ export class RoomCard extends LitElement implements LovelaceCard {
       icon: "mdi:sofa",
       icon_color: "#ffffff",
       icon_background_color: "#4A90D9",
-      background_color: "var(--card-background-color)",
-      active_color: "var(--primary-color)",
-      inactive_color: "var(--disabled-text-color)",
       tv_color: "#7C4DFF",
       media_player_color: "#1E88E5",
       climate_color: "#FF6D00",
@@ -84,9 +94,14 @@ export class RoomCard extends LitElement implements LovelaceCard {
     return 4;
   }
 
+  private _getConfigValue(key: string): unknown {
+    if (!this._config) return undefined;
+    return (this._config as Record<string, unknown>)[key];
+  }
+
   private _getEntity(type: string): HassEntity | undefined {
     if (!this.hass || !this._config) return undefined;
-    const entityId = (this._config as Record<string, unknown>)[`${type}_entity`] as string | undefined;
+    const entityId = this._getConfigValue(`${type}_entity`) as string | undefined;
     if (!entityId) return undefined;
     return this.hass.states[entityId];
   }
@@ -97,8 +112,8 @@ export class RoomCard extends LitElement implements LovelaceCard {
     unit?: string;
   } {
     if (!this.hass || !this._config) return {};
-    const c1 = (this._config as Record<string, unknown>).climate_1_entity as string | undefined;
-    const c2 = (this._config as Record<string, unknown>).climate_2_entity as string | undefined;
+    const c1 = this._getConfigValue("climate_1_entity") as string | undefined;
+    const c2 = this._getConfigValue("climate_2_entity") as string | undefined;
 
     for (const entityId of [c1, c2]) {
       if (entityId && this.hass.states[entityId]) {
@@ -116,8 +131,8 @@ export class RoomCard extends LitElement implements LovelaceCard {
 
   private _getHumidity(): number | undefined {
     if (!this.hass || !this._config) return undefined;
-    const c1 = (this._config as Record<string, unknown>).climate_1_entity as string | undefined;
-    const c2 = (this._config as Record<string, unknown>).climate_2_entity as string | undefined;
+    const c1 = this._getConfigValue("climate_1_entity") as string | undefined;
+    const c2 = this._getConfigValue("climate_2_entity") as string | undefined;
     for (const entityId of [c1, c2]) {
       if (entityId && this.hass.states[entityId]?.attributes.current_humidity !== undefined) {
         return this.hass.states[entityId].attributes.current_humidity as number;
@@ -127,18 +142,18 @@ export class RoomCard extends LitElement implements LovelaceCard {
   }
 
   private _fire(type: string, detail?: Record<string, unknown>): void {
-    const event = new CustomEvent(type, {
-      bubbles: true,
-      composed: true,
-      detail,
-    });
-    this.dispatchEvent(event);
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        bubbles: true,
+        composed: true,
+        detail,
+      })
+    );
   }
 
   private _handleEntityClick(ev: Event, type: string): void {
     ev.stopPropagation();
-    if (!this.hass || !this._config) return;
-    const entityId = (this._config as Record<string, unknown>)[`${type}_entity`] as string | undefined;
+    const entityId = this._getConfigValue(`${type}_entity`) as string | undefined;
     if (!entityId) return;
     this._fire("hass-more-info", { entityId });
   }
@@ -146,7 +161,7 @@ export class RoomCard extends LitElement implements LovelaceCard {
   private async _handleEntityDblClick(ev: Event, type: string): Promise<void> {
     ev.stopPropagation();
     if (!this.hass || !this._config) return;
-    const entityId = (this._config as Record<string, unknown>)[`${type}_entity`] as string | undefined;
+    const entityId = this._getConfigValue(`${type}_entity`) as string | undefined;
     if (!entityId) return;
     const domain = entityId.split(".")[0];
     const entity = this.hass.states[entityId];
@@ -168,17 +183,15 @@ export class RoomCard extends LitElement implements LovelaceCard {
 
   private _getTypeColor(type: string): { active: string; inactive: string } {
     const typeKey = getTypeKey(type);
-    const configColor = (this._config as Record<string, unknown>)[`${typeKey}_color`] as string | undefined;
-    const defaults = TYPE_COLORS[typeKey] || TYPE_COLORS["light"];
-    return {
-      active: configColor || defaults.active,
-      inactive: defaults.inactive,
-    };
+    const rawColor = this._getConfigValue(`${typeKey}_color`);
+    const activeColor = colorToCSS(rawColor as string | number[] | undefined, TYPE_COLORS[typeKey]?.active || "#7C4DFF");
+    const inactiveColor = TYPE_COLORS[typeKey]?.inactive || "#B0B0B0";
+    return { active: activeColor, inactive: inactiveColor };
   }
 
   private _renderEntityCircle(type: string) {
     if (!this._config) return nothing;
-    const entityId = (this._config as Record<string, unknown>)[`${type}_entity`] as string | undefined;
+    const entityId = this._getConfigValue(`${type}_entity`) as string | undefined;
     if (!entityId) return nothing;
 
     const entity = this._getEntity(type);
@@ -187,12 +200,11 @@ export class RoomCard extends LitElement implements LovelaceCard {
     const active = isActive(entity, type);
     const icon = getEntityIcon(entity, type);
     const colors = this._getTypeColor(type);
-    const color = active ? colors.active : colors.inactive;
 
     return html`
       <div
-        class="entity-circle ${active ? "active" : "inactive"}"
-        style="--circle-color: ${color}"
+        class="entity-status ${active ? "entity-status--active" : ""}"
+        style="--status-color: ${active ? colors.active : colors.inactive}"
         @click=${(e: Event) => this._handleEntityClick(e, type)}
         @dblclick=${(e: Event) => this._handleEntityDblClick(e, type)}
       >
@@ -203,13 +215,11 @@ export class RoomCard extends LitElement implements LovelaceCard {
 
   /**
    * Render a column of entity circles for the same type.
-   * Entities of the same type are stacked vertically.
    */
   private _renderTypeColumn(types: string[]) {
-    const configuredTypes = types.filter((type) => {
-      const eid = (this._config as Record<string, unknown>)[`${type}_entity`] as string | undefined;
-      return !!eid;
-    });
+    const configuredTypes = types.filter(
+      (type) => !!this._getConfigValue(`${type}_entity`)
+    );
 
     if (configuredTypes.length === 0) return nothing;
 
@@ -228,70 +238,71 @@ export class RoomCard extends LitElement implements LovelaceCard {
     const { current: temperature, setpoint, unit } = this._getTempInfo();
     const humidity = this._getHumidity();
 
+    const iconBgColor = colorToCSS(
+      this._getConfigValue("icon_background_color") as string | number[] | undefined,
+      "#4A90D9"
+    );
+    const iconColor = colorToCSS(
+      this._getConfigValue("icon_color") as string | number[] | undefined,
+      "#ffffff"
+    );
+
     // Define entity type groups (stacked vertically)
     const typeGroups = [
-      { types: ["tv"], label: "tv" },
-      { types: ["media_player_1", "media_player_2"], label: "media_player" },
-      { types: ["climate_1", "climate_2"], label: "climate" },
-      { types: ["light_1", "light_2"], label: "light" },
-      { types: ["smoke_detector"], label: "smoke_detector" },
+      { types: ["tv"] },
+      { types: ["media_player_1", "media_player_2"] },
+      { types: ["climate_1", "climate_2"] },
+      { types: ["light_1", "light_2"] },
+      { types: ["smoke_detector"] },
     ];
 
     const hasAnyEntities = typeGroups.some((group) =>
-      group.types.some((type) => !!((this._config as Record<string, unknown>)[`${type}_entity`] as string | undefined))
+      group.types.some((type) => !!this._getConfigValue(`${type}_entity`))
     );
 
     return html`
-      <ha-card
-        class="room-card"
-        style="--room-bg: ${this._config.background_color}; --icon-bg: ${this._config.icon_background_color}"
-      >
-        <div class="card-content">
-          ${this._config.title
-            ? html`<div class="card-header">${this._config.title}</div>`
+      <ha-card class="room-card">
+        <div class="room-card__content">
+          <header class="room-card__header">
+            <h1 class="room-card__name">${this._config.title || ""}</h1>
+            <div class="room-card__temp-hum">
+              ${temperature !== undefined
+                ? html`
+                    <span class="temp-value">
+                      ${temperature}${unit || "°C"}
+                      ${setpoint !== undefined
+                        ? html`<span class="temp-setpoint">/ ${setpoint}${unit || "°C"}</span>`
+                        : nothing}
+                    </span>
+                  `
+                : nothing}
+              ${humidity !== undefined
+                ? html`
+                    <span class="hum-value">
+                      <ha-icon icon="mdi:water-percent"></ha-icon>
+                      ${humidity}%
+                    </span>
+                  `
+                : nothing}
+            </div>
+          </header>
+
+          ${hasAnyEntities
+            ? html`
+                <aside class="room-card__status">
+                  ${typeGroups.map((group) => this._renderTypeColumn(group.types))}
+                </aside>
+              `
             : nothing}
-
-          <div class="card-body">
-            ${hasAnyEntities
-              ? html`
-                  <div class="entities-area">
-                    ${typeGroups.map((group) => this._renderTypeColumn(group.types))}
-                  </div>
-                `
-              : nothing}
-          </div>
-
-          <div class="bottom-bar">
-            ${temperature !== undefined
-              ? html`
-                  <div class="sensor-value">
-                    <ha-icon icon="mdi:thermometer"></ha-icon>
-                    <span class="temp-current">${temperature}${unit || "°C"}</span>
-                    ${setpoint !== undefined
-                      ? html`<span class="temp-setpoint">/ ${setpoint}${unit || "°C"}</span>`
-                      : nothing}
-                  </div>
-                `
-              : nothing}
-            ${humidity !== undefined
-              ? html`
-                  <div class="sensor-value">
-                    <ha-icon icon="mdi:water-percent"></ha-icon>
-                    <span>${humidity}%</span>
-                  </div>
-                `
-              : nothing}
-          </div>
         </div>
 
-        <!-- Room icon circle overlapping bottom-left corner -->
+        <!-- Room icon overlapping bottom-left corner -->
         <div
-          class="room-icon-circle"
-          style="background: var(--icon-bg, #4A90D9)"
+          class="room-card__icon"
+          style="--icon-bg: ${iconBgColor}; --icon-color: ${iconColor}"
         >
           <ha-icon
-            icon=${this._config.icon || "mdi:home-outline"}
-            style="color: ${this._config.icon_color}"
+            icon=${(this._getConfigValue("icon") as string) || "mdi:home-outline"}
           ></ha-icon>
         </div>
       </ha-card>
@@ -304,148 +315,151 @@ export class RoomCard extends LitElement implements LovelaceCard {
     }
 
     ha-card.room-card {
-      background: var(--room-bg, var(--card-background-color, #1c1c1e));
-      border-radius: 28px;
-      overflow: visible;
       position: relative;
+      overflow: hidden;
+      border-radius: var(--ha-card-border-radius, 12px);
     }
 
-    .card-content {
-      padding: 20px;
+    .room-card__content {
+      padding: 16px 16px 20px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      position: relative;
+      z-index: 2;
     }
 
-    .card-header {
-      font-size: 18px;
-      font-weight: 500;
-      color: var(--primary-text-color, #fff);
-      letter-spacing: 0.1px;
-      padding-bottom: 0;
-    }
-
-    .card-body {
+    /* Header with title and temp/humidity */
+    .room-card__header {
       display: flex;
-      align-items: flex-end;
       justify-content: space-between;
-      min-height: 48px;
+      align-items: baseline;
+      margin-bottom: 12px;
     }
 
-    /* Room icon circle overlapping bottom-left corner */
-    .room-icon-circle {
-      position: absolute;
-      bottom: -30px;
-      left: -30px;
-      width: 96px;
-      height: 96px;
-      border-radius: 50%;
-      background: var(--icon-bg, #4A90D9);
+    .room-card__name {
+      font-size: 20px;
+      font-weight: 300;
+      margin: 0;
+      color: var(--primary-text-color);
+    }
+
+    .room-card__temp-hum {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .temp-value {
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--primary-text-color);
+    }
+
+    .temp-setpoint {
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--secondary-text-color);
+    }
+
+    .hum-value {
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--secondary-text-color);
       display: flex;
       align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-      z-index: 1;
+      gap: 2px;
     }
 
-    .room-icon-circle ha-icon {
-      --mdi-icon-size: 36px;
-      color: #ffffff;
-      margin-top: 8px;
-      margin-right: 8px;
+    .hum-value ha-icon {
+      --mdi-icon-size: 16px;
     }
 
-    /* Entities on the right */
-    .entities-area {
+    /* Entity status area - right side, with margin for icon */
+    .room-card__status {
       display: flex;
-      align-items: flex-end;
-      gap: 12px;
-      justify-content: flex-end;
       flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: flex-end;
+      gap: 10px;
+      margin-left: 60px;
+      padding-top: 16px;
+      min-height: 50px;
     }
 
     /* Column of same-type entities stacked vertically */
     .type-column {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
     }
 
-    .entity-circle {
-      width: 44px;
-      height: 44px;
-      border-radius: 22px;
-      background: var(--circle-color, var(--disabled-text-color, #636366));
+    /* Entity status circle - matches reference EntityTypeStatus pattern */
+    .entity-status {
+      width: 38px;
+      height: 38px;
+      border-radius: 9999px;
+      background-color: var(--status-color, var(--disabled-text-color));
       display: flex;
       align-items: center;
       justify-content: center;
+      opacity: 0.3;
       cursor: pointer;
-      transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                  transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
-                  box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
+      transition: opacity 0.25s ease, transform 0.15s ease;
     }
 
-    .entity-circle:hover {
-      transform: scale(1.06);
+    .entity-status--active {
+      opacity: 1;
     }
 
-    .entity-circle:active {
-      transform: scale(0.95);
+    .entity-status:hover {
+      opacity: 0.8;
     }
 
-    .entity-circle.active {
-      box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.15),
-                  0 0 0 1px rgba(255, 255, 255, 0.05);
+    .entity-status:active {
+      transform: scale(0.92);
     }
 
-    .entity-circle.inactive {
-      opacity: 0.5;
+    .entity-status ha-icon {
+      --mdi-icon-size: 20px;
+      color: var(--secondary-text-color);
     }
 
-    .entity-circle ha-icon {
-      --mdi-icon-size: 22px;
-      color: #fff;
-      display: flex;
+    .entity-status--active ha-icon {
+      color: var(--primary-text-color);
     }
 
-    /* Bottom bar with temperature and humidity */
-    .bottom-bar {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding-top: 12px;
-      border-top: 1px solid var(--divider-color, rgba(255, 255, 255, 0.08));
-    }
-
-    .sensor-value {
+    /* Room icon - large circle at bottom-left, overlapping card corner */
+    .room-card__icon {
+      position: absolute;
+      left: -10px;
+      bottom: -10px;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: radial-gradient(
+        circle at 40% 40%,
+        color-mix(in srgb, var(--icon-bg, #4A90D9) 30%, white),
+        color-mix(in srgb, var(--icon-bg, #4A90D9) 70%, transparent)
+      );
       display: flex;
       align-items: center;
-      gap: 4px;
-      color: var(--primary-text-color, #fff);
-      font-size: 14px;
-      font-weight: 400;
+      justify-content: center;
+      z-index: 1;
+      pointer-events: none;
     }
 
-    .sensor-value ha-icon {
-      --mdi-icon-size: 18px;
-      color: var(--secondary-text-color, #aaa);
-    }
-
-    .temp-current {
-      font-weight: 500;
-    }
-
-    .temp-setpoint {
-      color: var(--secondary-text-color, #aaa);
-      font-size: 13px;
+    .room-card__icon ha-icon {
+      --mdi-icon-size: 38px;
+      color: var(--icon-color, #ffffff);
+      margin-top: 4px;
+      margin-right: 4px;
     }
 
     .placeholder {
       padding: 24px;
       text-align: center;
-      color: var(--disabled-text-color, #666);
+      color: var(--disabled-text-color);
     }
   `;
 }
