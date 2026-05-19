@@ -445,10 +445,10 @@ export class RoomCard extends LitElement implements LovelaceCard {
     /* Room icon - large circle at bottom-left, overlapping card corner */
     .room-card__icon {
       position: absolute;
-      left: -15px;
-      bottom: -15px;
-      width: 150px;
-      height: 150px;
+      left: -40px;
+      bottom: -40px;
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
       background: var(--icon-bg, #4A90D9);
       display: flex;
@@ -459,7 +459,7 @@ export class RoomCard extends LitElement implements LovelaceCard {
     }
 
     .room-card__icon ha-icon {
-      --mdi-icon-size: 57px;
+      --mdi-icon-size: 60px;
       color: var(--icon-color, #ffffff);
       margin-top: 6px;
       margin-right: 6px;
