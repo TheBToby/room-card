@@ -2,12 +2,42 @@ import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { HomeAssistant, LovelaceCard, RoomCardConfig, HassEntity } from "./types";
 
-// Default colors per entity type (Material You inspired)
-const TYPE_COLORS: Record<string, { active: string; inactive: string; icon: string }> = {
-  tv: { active: "#7C4DFF", inactive: "#B8A9E0", icon: "mdi:television" },
-  media_player: { active: "#1E88E5", inactive: "#90C5F5", icon: "mdi:speaker" },
-  climate: { active: "#FF6D00", inactive: "#FFB97A", icon: "mdi:home-thermometer" },
-  light: { active: "#FDD835", inactive: "#C5C099", icon: "mdi:lightbulb" },
+// Hard-coded colors per entity type for active and inactive states
+const TYPE_COLORS: Record<string, {
+  active_bg: string;
+  active_icon_color: string;
+  inactive_bg: string;
+  inactive_icon_color: string;
+  icon: string;
+}> = {
+  tv: {
+    active_bg: "#7C4DFF",
+    active_icon_color: "#ffffff",
+    inactive_bg: "#B8A9E0",
+    inactive_icon_color: "#ffffff",
+    icon: "mdi:television",
+  },
+  media_player: {
+    active_bg: "#1E88E5",
+    active_icon_color: "#ffffff",
+    inactive_bg: "#90C5F5",
+    inactive_icon_color: "#ffffff",
+    icon: "mdi:speaker",
+  },
+  climate: {
+    active_bg: "#FF6D00",
+    active_icon_color: "#ffffff",
+    inactive_bg: "#FFB97A",
+    inactive_icon_color: "#ffffff",
+    icon: "mdi:home-thermometer",
+  },
+  light: {
+    active_bg: "#FDD835",
+    active_icon_color: "#ffffff",
+    inactive_bg: "#C5C099",
+    inactive_icon_color: "#ffffff",
+    icon: "mdi:lightbulb",
+  },
 };
 
 
@@ -183,15 +213,14 @@ export class RoomCard extends LitElement implements LovelaceCard {
     const active = isActive(entity, type);
     const icon = getEntityIcon(entity, type);
     const typeKey = getTypeKey(type);
-    const colors = {
-      active: TYPE_COLORS[typeKey]?.active || "#7C4DFF",
-      inactive: TYPE_COLORS[typeKey]?.inactive || "#B0B0B0",
-    };
+    const typeColor = TYPE_COLORS[typeKey] || TYPE_COLORS["light"];
+    const bgColor = active ? typeColor.active_bg : typeColor.inactive_bg;
+    const iconColor = active ? typeColor.active_icon_color : typeColor.inactive_icon_color;
 
     return html`
       <div
         class="entity-status ${active ? "entity-status--active" : ""}"
-        style="--status-color: ${active ? colors.active : colors.inactive}"
+        style="--status-bg: ${bgColor}; --status-icon-color: ${iconColor}"
         @click=${(e: Event) => this._handleEntityClick(e, type)}
         @dblclick=${(e: Event) => this._handleEntityDblClick(e, type)}
       >
@@ -385,7 +414,7 @@ export class RoomCard extends LitElement implements LovelaceCard {
       width: 38px;
       height: 38px;
       border-radius: 9999px;
-      background-color: var(--status-color, var(--disabled-text-color));
+      background-color: var(--status-bg, var(--disabled-text-color));
       display: flex;
       align-items: center;
       justify-content: center;
@@ -408,11 +437,7 @@ export class RoomCard extends LitElement implements LovelaceCard {
 
     .entity-status ha-icon {
       --mdi-icon-size: 20px;
-      color: var(--secondary-text-color);
-    }
-
-    .entity-status--active ha-icon {
-      color: var(--primary-text-color);
+      color: var(--status-icon-color, var(--secondary-text-color));
     }
 
     /* Room icon - large circle at bottom-left, overlapping card corner */
