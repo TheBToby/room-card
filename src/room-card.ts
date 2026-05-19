@@ -451,11 +451,6 @@ export class RoomCard extends LitElement implements LovelaceCard {
       height: 100px;
       border-radius: 50%;
       background-color: var(--icon-bg, #4A90D9);
-      /* background: radial-gradient(
-        circle at 40% 40%,
-        color-mix(in srgb, var(--icon-bg, #4A90D9) 30%, white),
-        color-mix(in srgb, var(--icon-bg, #4A90D9) 70%, transparent)
-      ); */
       display: flex;
       align-items: center;
       justify-content: center;
