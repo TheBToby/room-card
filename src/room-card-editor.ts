@@ -62,43 +62,35 @@ export class RoomCardEditor extends LitElement implements LovelaceCardEditor {
           @value-changed=${this._valueChanged}
         ></ha-form>
 
-        <div class="section">
-          <h3>Entity Colors</h3>
-          <ha-form
-            .hass=${this.hass}
-            .data=${this._config}
-            .schema=${[
-              {
-                type: "grid",
-                name: "",
-                flatten: true,
-                schema: [
-                  { name: "tv_color", selector: { color_rgb: {} } },
-                  { name: "media_player_color", selector: { color_rgb: {} } },
-                ],
-              },
-              {
-                type: "grid",
-                name: "",
-                flatten: true,
-                schema: [
-                  { name: "climate_color", selector: { color_rgb: {} } },
-                  { name: "light_color", selector: { color_rgb: {} } },
-                ],
-              },
-            ]}
+        <ha-form
+          .hass=${this.hass}
+          .data=${this._config}
+          .schema=${[
+            {
+              type: "grid",
+              name: "",
+              flatten: true,
+              schema: [
+                {
+                  name: "icon_color",
+                  selector: { color_rgb: {} },
+                },
+                {
+                  name: "icon_background_color",
+                  selector: { color_rgb: {} },
+                },
+              ],
+            },
+          ]}
           .computeLabel=${(schema: { name?: string }) => {
             const labels: Record<string, string> = {
-              tv_color: "TV",
-              media_player_color: "Media Player",
-              climate_color: "Climate",
-              light_color: "Light",
+              icon_color: "Icon Color",
+              icon_background_color: "Icon Background",
             };
-              return labels[schema.name || ""] || schema.name || "";
-            }}
-            @value-changed=${this._valueChanged}
-          ></ha-form>
-        </div>
+            return labels[schema.name || ""] || schema.name || "";
+          }}
+          @value-changed=${this._valueChanged}
+        ></ha-form>
 
         <div class="section">
           <h3>Media</h3>

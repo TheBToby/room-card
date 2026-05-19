@@ -137,10 +137,8 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
         return {
             title: "Living Room",
             icon: "mdi:sofa",
-            tv_color: "#7C4DFF",
-            media_player_color: "#1E88E5",
-            climate_color: "#FF6D00",
-            light_color: "#FDD835",
+            icon_color: "#ffffff",
+            icon_background_color: "#4A90D9",
         };
     }
     setConfig(config) {
@@ -233,13 +231,6 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
             });
         }
     }
-    _getTypeColor(type) {
-        const typeKey = getTypeKey(type);
-        const rawColor = this._getConfigValue(`${typeKey}_color`);
-        const activeColor = colorToCSS(rawColor, TYPE_COLORS[typeKey]?.active || "#7C4DFF");
-        const inactiveColor = TYPE_COLORS[typeKey]?.inactive || "#B0B0B0";
-        return { active: activeColor, inactive: inactiveColor };
-    }
     _renderEntityCircle(type) {
         if (!this._config)
             return A;
@@ -251,7 +242,11 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
             return A;
         const active = isActive(entity, type);
         const icon = getEntityIcon(entity, type);
-        const colors = this._getTypeColor(type);
+        const typeKey = getTypeKey(type);
+        const colors = {
+            active: TYPE_COLORS[typeKey]?.active || "#7C4DFF",
+            inactive: TYPE_COLORS[typeKey]?.inactive || "#B0B0B0",
+        };
         return b `
       <div
         class="entity-status ${active ? "entity-status--active" : ""}"
@@ -282,6 +277,8 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
         }
         const { current: temperature, setpoint, unit } = this._getTempInfo();
         const humidity = this._getHumidity();
+        const iconBgColor = colorToCSS(this._getConfigValue("icon_background_color"), "#4A90D9");
+        const iconColor = colorToCSS(this._getConfigValue("icon_color"), "#ffffff");
         // Define entity type groups (stacked vertically)
         const typeGroups = [
             { types: ["tv"] },
@@ -327,7 +324,10 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
         </div>
 
         <!-- Room icon overlapping bottom-left corner -->
-        <div class="room-card__icon">
+        <div
+          class="room-card__icon"
+          style="--icon-bg: ${iconBgColor}; --icon-color: ${iconColor}"
+        >
           <ha-icon
             icon=${this._getConfigValue("icon") || "mdi:home-outline"}
           ></ha-icon>
@@ -466,8 +466,8 @@ RoomCard.styles = i$3 `
       border-radius: 50%;
       background: radial-gradient(
         circle at 40% 40%,
-        color-mix(in srgb, #4A90D9 30%, white),
-        color-mix(in srgb, #4A90D9 70%, transparent)
+        color-mix(in srgb, var(--icon-bg, #4A90D9) 30%, white),
+        color-mix(in srgb, var(--icon-bg, #4A90D9) 70%, transparent)
       );
       display: flex;
       align-items: center;
@@ -478,7 +478,7 @@ RoomCard.styles = i$3 `
 
     .room-card__icon ha-icon {
       --mdi-icon-size: 38px;
-      color: #ffffff;
+      color: var(--icon-color, #ffffff);
       margin-top: 4px;
       margin-right: 4px;
     }
@@ -550,43 +550,35 @@ let RoomCardEditor = class RoomCardEditor extends i {
           @value-changed=${this._valueChanged}
         ></ha-form>
 
-        <div class="section">
-          <h3>Entity Colors</h3>
-          <ha-form
-            .hass=${this.hass}
-            .data=${this._config}
-            .schema=${[
+        <ha-form
+          .hass=${this.hass}
+          .data=${this._config}
+          .schema=${[
             {
                 type: "grid",
                 name: "",
                 flatten: true,
                 schema: [
-                    { name: "tv_color", selector: { color_rgb: {} } },
-                    { name: "media_player_color", selector: { color_rgb: {} } },
-                ],
-            },
-            {
-                type: "grid",
-                name: "",
-                flatten: true,
-                schema: [
-                    { name: "climate_color", selector: { color_rgb: {} } },
-                    { name: "light_color", selector: { color_rgb: {} } },
+                    {
+                        name: "icon_color",
+                        selector: { color_rgb: {} },
+                    },
+                    {
+                        name: "icon_background_color",
+                        selector: { color_rgb: {} },
+                    },
                 ],
             },
         ]}
           .computeLabel=${(schema) => {
             const labels = {
-                tv_color: "TV",
-                media_player_color: "Media Player",
-                climate_color: "Climate",
-                light_color: "Light",
+                icon_color: "Icon Color",
+                icon_background_color: "Icon Background",
             };
             return labels[schema.name || ""] || schema.name || "";
         }}
-            @value-changed=${this._valueChanged}
-          ></ha-form>
-        </div>
+          @value-changed=${this._valueChanged}
+        ></ha-form>
 
         <div class="section">
           <h3>Media</h3>

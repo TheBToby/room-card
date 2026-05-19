@@ -10,9 +10,6 @@ const TYPE_COLORS: Record<string, { active: string; inactive: string; icon: stri
   light: { active: "#FDD835", inactive: "#C5C099", icon: "mdi:lightbulb" },
 };
 
-// Hard-coded icon colors
-const ICON_COLOR = "#ffffff";
-const ICON_BG_COLOR = "#4A90D9";
 
 function getTypeKey(entityType: string): string {
   if (entityType === "tv") return "tv";
@@ -73,10 +70,8 @@ export class RoomCard extends LitElement implements LovelaceCard {
     return {
       title: "Living Room",
       icon: "mdi:sofa",
-      tv_color: "#7C4DFF",
-      media_player_color: "#1E88E5",
-      climate_color: "#FF6D00",
-      light_color: "#FDD835",
+      icon_color: "#ffffff",
+      icon_background_color: "#4A90D9",
     };
   }
 
@@ -176,13 +171,6 @@ export class RoomCard extends LitElement implements LovelaceCard {
     }
   }
 
-  private _getTypeColor(type: string): { active: string; inactive: string } {
-    const typeKey = getTypeKey(type);
-    const rawColor = this._getConfigValue(`${typeKey}_color`);
-    const activeColor = colorToCSS(rawColor as string | number[] | undefined, TYPE_COLORS[typeKey]?.active || "#7C4DFF");
-    const inactiveColor = TYPE_COLORS[typeKey]?.inactive || "#B0B0B0";
-    return { active: activeColor, inactive: inactiveColor };
-  }
 
   private _renderEntityCircle(type: string) {
     if (!this._config) return nothing;
@@ -194,7 +182,11 @@ export class RoomCard extends LitElement implements LovelaceCard {
 
     const active = isActive(entity, type);
     const icon = getEntityIcon(entity, type);
-    const colors = this._getTypeColor(type);
+    const typeKey = getTypeKey(type);
+    const colors = {
+      active: TYPE_COLORS[typeKey]?.active || "#7C4DFF",
+      inactive: TYPE_COLORS[typeKey]?.inactive || "#B0B0B0",
+    };
 
     return html`
       <div
@@ -233,6 +225,14 @@ export class RoomCard extends LitElement implements LovelaceCard {
     const { current: temperature, setpoint, unit } = this._getTempInfo();
     const humidity = this._getHumidity();
 
+    const iconBgColor = colorToCSS(
+      this._getConfigValue("icon_background_color") as string | number[] | undefined,
+      "#4A90D9"
+    );
+    const iconColor = colorToCSS(
+      this._getConfigValue("icon_color") as string | number[] | undefined,
+      "#ffffff"
+    );
 
     // Define entity type groups (stacked vertically)
     const typeGroups = [
@@ -283,7 +283,10 @@ export class RoomCard extends LitElement implements LovelaceCard {
         </div>
 
         <!-- Room icon overlapping bottom-left corner -->
-        <div class="room-card__icon">
+        <div
+          class="room-card__icon"
+          style="--icon-bg: ${iconBgColor}; --icon-color: ${iconColor}"
+        >
           <ha-icon
             icon=${(this._getConfigValue("icon") as string) || "mdi:home-outline"}
           ></ha-icon>
@@ -422,8 +425,8 @@ export class RoomCard extends LitElement implements LovelaceCard {
       border-radius: 50%;
       background: radial-gradient(
         circle at 40% 40%,
-        color-mix(in srgb, #4A90D9 30%, white),
-        color-mix(in srgb, #4A90D9 70%, transparent)
+        color-mix(in srgb, var(--icon-bg, #4A90D9) 30%, white),
+        color-mix(in srgb, var(--icon-bg, #4A90D9) 70%, transparent)
       );
       display: flex;
       align-items: center;
@@ -434,7 +437,7 @@ export class RoomCard extends LitElement implements LovelaceCard {
 
     .room-card__icon ha-icon {
       --mdi-icon-size: 38px;
-      color: #ffffff;
+      color: var(--icon-color, #ffffff);
       margin-top: 4px;
       margin-right: 4px;
     }

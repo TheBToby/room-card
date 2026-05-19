@@ -38,12 +38,8 @@ export interface RoomCardConfig extends LovelaceCardConfig {
   type: string;
   title?: string;
   icon?: string;
-  active_color?: string;
-  inactive_color?: string;
-  tv_color?: string;
-  media_player_color?: string;
-  climate_color?: string;
-  light_color?: string;
+  icon_color?: string;
+  icon_background_color?: string;
   tv_entity?: string;
   media_player_1_entity?: string;
   media_player_2_entity?: string;
