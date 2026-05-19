@@ -431,7 +431,7 @@ RoomCard.styles = i$3 `
       justify-content: flex-end;
       align-items: flex-end;
       gap: 10px;
-      margin-left: 60px;
+      margin-left: 80px;
       padding-top: 16px;
       min-height: 50px;
     }
@@ -480,16 +480,12 @@ RoomCard.styles = i$3 `
     /* Room icon - large circle at bottom-left, overlapping card corner */
     .room-card__icon {
       position: absolute;
-      left: -10px;
-      bottom: -10px;
-      width: 100px;
-      height: 100px;
+      left: -15px;
+      bottom: -15px;
+      width: 150px;
+      height: 150px;
       border-radius: 50%;
-      background: radial-gradient(
-        circle at 40% 40%,
-        color-mix(in srgb, var(--icon-bg, #4A90D9) 30%, white),
-        color-mix(in srgb, var(--icon-bg, #4A90D9) 70%, transparent)
-      );
+      background: var(--icon-bg, #4A90D9);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -498,10 +494,10 @@ RoomCard.styles = i$3 `
     }
 
     .room-card__icon ha-icon {
-      --mdi-icon-size: 38px;
+      --mdi-icon-size: 57px;
       color: var(--icon-color, #ffffff);
-      margin-top: 4px;
-      margin-right: 4px;
+      margin-top: 6px;
+      margin-right: 6px;
     }
 
     .placeholder {
