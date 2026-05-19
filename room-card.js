@@ -79,7 +79,6 @@ const TYPE_COLORS = {
     media_player: { active: "#1E88E5", inactive: "#90C5F5", icon: "mdi:speaker" },
     climate: { active: "#FF6D00", inactive: "#FFB97A", icon: "mdi:home-thermometer" },
     light: { active: "#FDD835", inactive: "#C5C099", icon: "mdi:lightbulb" },
-    smoke_detector: { active: "#EF5350", inactive: "#E0A8A7", icon: "mdi:smoke-detector-variant" },
 };
 function getTypeKey(entityType) {
     if (entityType === "tv")
@@ -90,8 +89,6 @@ function getTypeKey(entityType) {
         return "climate";
     if (entityType.startsWith("light"))
         return "light";
-    if (entityType === "smoke_detector")
-        return "smoke_detector";
     return "light";
 }
 function isActive(entity, type) {
@@ -106,8 +103,6 @@ function isActive(entity, type) {
         case "climate":
             return state !== "off" && state !== "unavailable" && state !== "unknown";
         case "light":
-            return state === "on";
-        case "smoke_detector":
             return state === "on";
         default:
             return state === "on";
@@ -142,13 +137,10 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
         return {
             title: "Living Room",
             icon: "mdi:sofa",
-            icon_color: "#ffffff",
-            icon_background_color: "#4A90D9",
             tv_color: "#7C4DFF",
             media_player_color: "#1E88E5",
             climate_color: "#FF6D00",
             light_color: "#FDD835",
-            smoke_detector_color: "#EF5350",
         };
     }
     setConfig(config) {
@@ -240,9 +232,6 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
                 entity_id: entityId,
             });
         }
-        else if (domain === "binary_sensor") {
-            this._fire("hass-more-info", { entityId });
-        }
     }
     _getTypeColor(type) {
         const typeKey = getTypeKey(type);
@@ -293,15 +282,12 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
         }
         const { current: temperature, setpoint, unit } = this._getTempInfo();
         const humidity = this._getHumidity();
-        const iconBgColor = colorToCSS(this._getConfigValue("icon_background_color"), "#4A90D9");
-        const iconColor = colorToCSS(this._getConfigValue("icon_color"), "#ffffff");
         // Define entity type groups (stacked vertically)
         const typeGroups = [
             { types: ["tv"] },
             { types: ["media_player_1", "media_player_2"] },
             { types: ["climate_1", "climate_2"] },
             { types: ["light_1", "light_2"] },
-            { types: ["smoke_detector"] },
         ];
         const hasAnyEntities = typeGroups.some((group) => group.types.some((type) => !!this._getConfigValue(`${type}_entity`)));
         return b `
@@ -341,10 +327,7 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
         </div>
 
         <!-- Room icon overlapping bottom-left corner -->
-        <div
-          class="room-card__icon"
-          style="--icon-bg: ${iconBgColor}; --icon-color: ${iconColor}"
-        >
+        <div class="room-card__icon">
           <ha-icon
             icon=${this._getConfigValue("icon") || "mdi:home-outline"}
           ></ha-icon>
@@ -483,8 +466,8 @@ RoomCard.styles = i$3 `
       border-radius: 50%;
       background: radial-gradient(
         circle at 40% 40%,
-        color-mix(in srgb, var(--icon-bg, #4A90D9) 30%, white),
-        color-mix(in srgb, var(--icon-bg, #4A90D9) 70%, transparent)
+        color-mix(in srgb, #4A90D9 30%, white),
+        color-mix(in srgb, #4A90D9 70%, transparent)
       );
       display: flex;
       align-items: center;
@@ -495,7 +478,7 @@ RoomCard.styles = i$3 `
 
     .room-card__icon ha-icon {
       --mdi-icon-size: 38px;
-      color: var(--icon-color, #ffffff);
+      color: #ffffff;
       margin-top: 4px;
       margin-right: 4px;
     }
@@ -556,28 +539,11 @@ let RoomCardEditor = class RoomCardEditor extends i {
                     },
                 ],
             },
-            {
-                type: "grid",
-                name: "",
-                flatten: true,
-                schema: [
-                    {
-                        name: "icon_color",
-                        selector: { color_rgb: {} },
-                    },
-                    {
-                        name: "icon_background_color",
-                        selector: { color_rgb: {} },
-                    },
-                ],
-            },
         ]}
           .computeLabel=${(schema) => {
             const labels = {
                 title: "Title",
                 icon: "Room Icon",
-                icon_color: "Icon Color",
-                icon_background_color: "Icon Background",
             };
             return labels[schema.name || ""] || schema.name || "";
         }}
@@ -608,22 +574,13 @@ let RoomCardEditor = class RoomCardEditor extends i {
                     { name: "light_color", selector: { color_rgb: {} } },
                 ],
             },
-            {
-                type: "grid",
-                name: "",
-                flatten: true,
-                schema: [
-                    { name: "smoke_detector_color", selector: { color_rgb: {} } },
-                ],
-            },
         ]}
-            .computeLabel=${(schema) => {
+          .computeLabel=${(schema) => {
             const labels = {
                 tv_color: "TV",
                 media_player_color: "Media Player",
                 climate_color: "Climate",
                 light_color: "Light",
-                smoke_detector_color: "Smoke Detector",
             };
             return labels[schema.name || ""] || schema.name || "";
         }}
@@ -714,26 +671,6 @@ let RoomCardEditor = class RoomCardEditor extends i {
           ></ha-form>
         </div>
 
-        <div class="section">
-          <h3>Safety</h3>
-          <ha-form
-            .hass=${this.hass}
-            .data=${this._config}
-            .schema=${[
-            {
-                name: "smoke_detector_entity",
-                selector: { entity: { domain: "binary_sensor" } },
-            },
-        ]}
-            .computeLabel=${(schema) => {
-            const labels = {
-                smoke_detector_entity: "Smoke Detector",
-            };
-            return labels[schema.name || ""] || schema.name || "";
-        }}
-            @value-changed=${this._valueChanged}
-          ></ha-form>
-        </div>
       </div>
     `;
     }

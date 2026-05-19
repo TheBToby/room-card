@@ -51,28 +51,11 @@ export class RoomCardEditor extends LitElement implements LovelaceCardEditor {
                 },
               ],
             },
-            {
-              type: "grid",
-              name: "",
-              flatten: true,
-              schema: [
-                {
-                  name: "icon_color",
-                  selector: { color_rgb: {} },
-                },
-                {
-                  name: "icon_background_color",
-                  selector: { color_rgb: {} },
-                },
-              ],
-            },
           ]}
           .computeLabel=${(schema: { name?: string }) => {
             const labels: Record<string, string> = {
               title: "Title",
               icon: "Room Icon",
-              icon_color: "Icon Color",
-              icon_background_color: "Icon Background",
             };
             return labels[schema.name || ""] || schema.name || "";
           }}
@@ -103,23 +86,14 @@ export class RoomCardEditor extends LitElement implements LovelaceCardEditor {
                   { name: "light_color", selector: { color_rgb: {} } },
                 ],
               },
-              {
-                type: "grid",
-                name: "",
-                flatten: true,
-                schema: [
-                  { name: "smoke_detector_color", selector: { color_rgb: {} } },
-                ],
-              },
             ]}
-            .computeLabel=${(schema: { name?: string }) => {
-              const labels: Record<string, string> = {
-                tv_color: "TV",
-                media_player_color: "Media Player",
-                climate_color: "Climate",
-                light_color: "Light",
-                smoke_detector_color: "Smoke Detector",
-              };
+          .computeLabel=${(schema: { name?: string }) => {
+            const labels: Record<string, string> = {
+              tv_color: "TV",
+              media_player_color: "Media Player",
+              climate_color: "Climate",
+              light_color: "Light",
+            };
               return labels[schema.name || ""] || schema.name || "";
             }}
             @value-changed=${this._valueChanged}
@@ -209,26 +183,6 @@ export class RoomCardEditor extends LitElement implements LovelaceCardEditor {
           ></ha-form>
         </div>
 
-        <div class="section">
-          <h3>Safety</h3>
-          <ha-form
-            .hass=${this.hass}
-            .data=${this._config}
-            .schema=${[
-              {
-                name: "smoke_detector_entity",
-                selector: { entity: { domain: "binary_sensor" } },
-              },
-            ]}
-            .computeLabel=${(schema: { name?: string }) => {
-              const labels: Record<string, string> = {
-                smoke_detector_entity: "Smoke Detector",
-              };
-              return labels[schema.name || ""] || schema.name || "";
-            }}
-            @value-changed=${this._valueChanged}
-          ></ha-form>
-        </div>
       </div>
     `;
   }
