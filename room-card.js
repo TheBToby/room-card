@@ -76,31 +76,31 @@ var RoomCard_1;
 // Hard-coded colors per entity type for active and inactive states
 const TYPE_COLORS = {
     tv: {
-        active_bg: "#7C4DFF",
-        active_icon_color: "#ffffff",
-        inactive_bg: "#B8A9E0",
-        inactive_icon_color: "#ffffff",
+        active_bg: "#dfeadc",
+        active_icon_color: "#688260",
+        inactive_bg: "#e0e0e040",
+        inactive_icon_color: "#A0A0A080",
         icon: "mdi:television",
     },
     media_player: {
-        active_bg: "#1E88E5",
-        active_icon_color: "#ffffff",
-        inactive_bg: "#90C5F5",
-        inactive_icon_color: "#ffffff",
+        active_bg: "#e0d9f4",
+        active_icon_color: "#695a99",
+        inactive_bg: "#e0e0e040",
+        inactive_icon_color: "#A0A0A080",
         icon: "mdi:speaker",
     },
     climate: {
-        active_bg: "#FF6D00",
-        active_icon_color: "#ffffff",
-        inactive_bg: "#FFB97A",
-        inactive_icon_color: "#ffffff",
+        active_bg: "#e0e0e040",
+        active_icon_color: "#A0A0A080",
+        inactive_bg: "#e0e0e040",
+        inactive_icon_color: "#A0A0A080",
         icon: "mdi:home-thermometer",
     },
     light: {
-        active_bg: "#FDD835",
-        active_icon_color: "#ffffff",
-        inactive_bg: "#C5C099",
-        inactive_icon_color: "#ffffff",
+        active_bg: "#d8eaed",
+        active_icon_color: "#578288",
+        inactive_bg: "#e0e0e040",
+        inactive_icon_color: "#A0A0A080",
         icon: "mdi:lightbulb",
     },
 };
@@ -450,12 +450,14 @@ RoomCard.styles = i$3 `
       height: 38px;
       border-radius: 9999px;
       background-color: var(--status-bg, var(--disabled-text-color));
+      border: 2px solid var(--status-icon-color, var(--secondary-text-color));
       display: flex;
       align-items: center;
       justify-content: center;
       opacity: 0.3;
       cursor: pointer;
       transition: opacity 0.25s ease, transform 0.15s ease;
+      box-sizing: border-box;
     }
 
     .entity-status--active {
