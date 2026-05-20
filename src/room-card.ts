@@ -55,14 +55,15 @@ function isActive(entity: HassEntity | undefined, type: string): boolean {
   const typeKey = getTypeKey(type);
   switch (typeKey) {
     case "tv":
+      return state === "on";
     case "media_player":
-      return !["off", "standby", "unavailable", "unknown"].includes(state);
+      return state === "playing";
     case "climate":
       return state !== "off" && state !== "unavailable" && state !== "unknown";
     case "light":
       return state === "on";
     default:
-      return state === "on";
+      return state === "off";
   }
 }
 
@@ -395,7 +396,7 @@ export class RoomCard extends LitElement implements LovelaceCard {
       flex-wrap: wrap;
       justify-content: flex-end;
       align-items: flex-end;
-      gap: 10px;
+      gap: 4px;
       margin-left: 80px;
       padding-top: 16px;
       min-height: 50px;
@@ -405,17 +406,17 @@ export class RoomCard extends LitElement implements LovelaceCard {
     .type-column {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
       align-items: center;
     }
 
     /* Entity status circle - matches reference EntityTypeStatus pattern */
     .entity-status {
-      width: 38px;
-      height: 38px;
+      width: 46px;
+      height: 46px;
       border-radius: 9999px;
       background-color: var(--status-bg, var(--disabled-text-color));
-      border: 2px solid var(--status-icon-color, var(--secondary-text-color));
+      border: 3px solid var(--status-icon-color, var(--secondary-text-color));
       display: flex;
       align-items: center;
       justify-content: center;
@@ -459,10 +460,11 @@ export class RoomCard extends LitElement implements LovelaceCard {
     }
 
     .room-card__icon ha-icon {
-      --mdi-icon-size: 60px;
+      --mdc-icon-size: 60px;
+      position: relative;
       color: var(--icon-color, #ffffff);
-      margin-top: 6px;
-      margin-right: 6px;
+      left: 15px;
+      bottom: 15px;
     }
 
     .placeholder {
