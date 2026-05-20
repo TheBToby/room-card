@@ -348,7 +348,7 @@ export class RoomCard extends LitElement implements LovelaceCard {
     }
 
     .room-card__content {
-      padding: 16px 16px 20px;
+      padding: 16px 16px 4px;
       display: flex;
       flex-direction: column;
       position: relative;
@@ -357,7 +357,7 @@ export class RoomCard extends LitElement implements LovelaceCard {
 
     /* Header with title */
     .room-card__header {
-      margin-bottom: 12px;
+      margin-bottom: -40px;
     }
 
     .room-card__name {
@@ -372,10 +372,10 @@ export class RoomCard extends LitElement implements LovelaceCard {
       display: flex;
       justify-content: space-evenly;
       align-items: center;
-      padding: 10px 16px;
+      padding: 5px 16px 5px 85px;
       background-color: var(--secondary-background-color, #e0e0e0);
       position: relative;
-      z-index: 2;
+      z-index: 1;
     }
 
     .bottom-bar__value {
