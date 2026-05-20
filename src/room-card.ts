@@ -25,8 +25,8 @@ const TYPE_COLORS: Record<string, {
     icon: "mdi:speaker",
   },
   climate: {
-    active_bg: "#e0e0e040",
-    active_icon_color: "#A0A0A080",
+    active_bg: "#f8eadb",
+    active_icon_color: "#a1825f",
     inactive_bg: "#e0e0e040",
     inactive_icon_color: "#A0A0A080",
     icon: "mdi:home-thermometer",
@@ -446,8 +446,8 @@ export class RoomCard extends LitElement implements LovelaceCard {
     /* Room icon - large circle at bottom-left, overlapping card corner */
     .room-card__icon {
       position: absolute;
-      left: -40px;
-      bottom: -40px;
+      left: -30px;
+      bottom: -30px;
       width: 120px;
       height: 120px;
       border-radius: 50%;
@@ -463,8 +463,9 @@ export class RoomCard extends LitElement implements LovelaceCard {
       --mdc-icon-size: 60px;
       position: relative;
       color: var(--icon-color, #ffffff);
-      left: 15px;
-      bottom: 15px;
+      left: 7px;
+      bottom: 10px;
+      opacity: '0.5'
     }
 
     .placeholder {
