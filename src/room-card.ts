@@ -281,26 +281,6 @@ export class RoomCard extends LitElement implements LovelaceCard {
         <div class="room-card__content">
           <header class="room-card__header">
             <h1 class="room-card__name">${this._config.title || ""}</h1>
-            <div class="room-card__temp-hum">
-              ${temperature !== undefined
-                ? html`
-                    <span class="temp-value">
-                      ${temperature}${unit || "°C"}
-                      ${setpoint !== undefined
-                        ? html`<span class="temp-setpoint">/ ${setpoint}${unit || "°C"}</span>`
-                        : nothing}
-                    </span>
-                  `
-                : nothing}
-              ${humidity !== undefined
-                ? html`
-                    <span class="hum-value">
-                      <ha-icon icon="mdi:water-percent"></ha-icon>
-                      ${humidity}%
-                    </span>
-                  `
-                : nothing}
-            </div>
           </header>
 
           ${hasAnyEntities
@@ -311,6 +291,37 @@ export class RoomCard extends LitElement implements LovelaceCard {
               `
             : nothing}
         </div>
+
+        ${(temperature !== undefined || humidity !== undefined)
+          ? html`
+              <div class="room-card__bottom-bar">
+                ${temperature !== undefined
+                  ? html`
+                      <span class="bottom-bar__value">
+                        <ha-icon icon="mdi:thermometer"></ha-icon>
+                        ${temperature}${unit || "°C"}
+                      </span>
+                    `
+                  : nothing}
+                ${setpoint !== undefined
+                  ? html`
+                      <span class="bottom-bar__value">
+                        <ha-icon icon="mdi:thermostat"></ha-icon>
+                        ${setpoint}${unit || "°C"}
+                      </span>
+                    `
+                  : nothing}
+                ${humidity !== undefined
+                  ? html`
+                      <span class="bottom-bar__value">
+                        <ha-icon icon="mdi:water-percent"></ha-icon>
+                        ${humidity}%
+                      </span>
+                    `
+                  : nothing}
+              </div>
+            `
+          : nothing}
 
         <!-- Room icon overlapping bottom-left corner -->
         <div
@@ -344,11 +355,8 @@ export class RoomCard extends LitElement implements LovelaceCard {
       z-index: 2;
     }
 
-    /* Header with title and temp/humidity */
+    /* Header with title */
     .room-card__header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
       margin-bottom: 12px;
     }
 
@@ -359,35 +367,29 @@ export class RoomCard extends LitElement implements LovelaceCard {
       color: var(--primary-text-color);
     }
 
-    .room-card__temp-hum {
+    /* Bottom bar with temperature, setpoint, humidity */
+    .room-card__bottom-bar {
       display: flex;
-      align-items: baseline;
-      gap: 12px;
+      justify-content: space-evenly;
+      align-items: center;
+      padding: 10px 16px;
+      background-color: var(--secondary-background-color, #e0e0e0);
+      position: relative;
+      z-index: 2;
     }
 
-    .temp-value {
-      font-size: 20px;
+    .bottom-bar__value {
+      font-size: 14px;
       font-weight: 400;
       color: var(--primary-text-color);
-    }
-
-    .temp-setpoint {
-      font-size: 14px;
-      font-weight: 300;
-      color: var(--secondary-text-color);
-    }
-
-    .hum-value {
-      font-size: 14px;
-      font-weight: 300;
-      color: var(--secondary-text-color);
       display: flex;
       align-items: center;
-      gap: 2px;
+      gap: 4px;
     }
 
-    .hum-value ha-icon {
-      --mdi-icon-size: 16px;
+    .bottom-bar__value ha-icon {
+      --mdi-icon-size: 18px;
+      color: var(--secondary-text-color);
     }
 
     /* Entity status area - right side, with margin for icon */
@@ -465,7 +467,7 @@ export class RoomCard extends LitElement implements LovelaceCard {
       color: var(--icon-color, #ffffff);
       left: 7px;
       bottom: 10px;
-      opacity: '0.5'
+      opacity: '0.5';
     }
 
     .placeholder {
