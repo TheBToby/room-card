@@ -348,7 +348,7 @@ export class RoomCard extends LitElement implements LovelaceCard {
     }
 
     .room-card__content {
-      padding: 16px 16px 4px;
+      padding: 4px 4px 4px 16px;
       display: flex;
       flex-direction: column;
       position: relative;
@@ -357,7 +357,7 @@ export class RoomCard extends LitElement implements LovelaceCard {
 
     /* Header with title */
     .room-card__header {
-      margin-bottom: -40px;
+      margin-bottom: -48px;
     }
 
     .room-card__name {
@@ -372,8 +372,8 @@ export class RoomCard extends LitElement implements LovelaceCard {
       display: flex;
       justify-content: space-evenly;
       align-items: center;
-      padding: 5px 16px 5px 85px;
-      background-color: var(--secondary-background-color, #e0e0e0);
+      padding: 2px 16px 2px 85px;
+      background-color: var(--input-background-color, #e0e0e0);
       position: relative;
       z-index: 1;
     }
@@ -381,7 +381,7 @@ export class RoomCard extends LitElement implements LovelaceCard {
     .bottom-bar__value {
       font-size: 14px;
       font-weight: 400;
-      color: var(--primary-text-color);
+      color: var(--secondary-text-color);
       display: flex;
       align-items: center;
       gap: 4px;
@@ -400,7 +400,7 @@ export class RoomCard extends LitElement implements LovelaceCard {
       align-items: flex-end;
       gap: 4px;
       margin-left: 80px;
-      padding-top: 16px;
+      padding-top: 18px;
       min-height: 50px;
     }
 
@@ -426,6 +426,7 @@ export class RoomCard extends LitElement implements LovelaceCard {
       cursor: pointer;
       transition: opacity 0.25s ease, transform 0.15s ease;
       box-sizing: border-box;
+      box-shadow: var(--ha-card-box-shadow, "none");
     }
 
     .entity-status--active {
@@ -467,7 +468,7 @@ export class RoomCard extends LitElement implements LovelaceCard {
       color: var(--icon-color, #ffffff);
       left: 7px;
       bottom: 10px;
-      opacity: '0.5';
+      opacity: 0.5;
     }
 
     .placeholder {
