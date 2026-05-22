@@ -261,8 +261,12 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
         if (!entity)
             return;
         if (domain === "media_player") {
-            const newState = entity.state === "off" ? "turn_on" : "turn_off";
-            await this.hass.callService("media_player", newState, { entity_id: entityId });
+            if (entity.state === "playing") {
+                await this.hass.callService("media_player", "media_pause", { entity_id: entityId });
+            }
+            else if (entity.state === "paused") {
+                await this.hass.callService("media_player", "media_play", { entity_id: entityId });
+            }
         }
         else if (domain === "light") {
             await this.hass.callService("light", "toggle", { entity_id: entityId });
@@ -574,15 +578,20 @@ let RoomCardEditor = class RoomCardEditor extends i {
                         selector: { text: {} },
                     },
                     {
-                        name: "icon",
-                        selector: { icon: {} },
+                        name: "area",
+                        selector: { area: {} },
                     },
                 ],
+            },
+            {
+                name: "icon",
+                selector: { icon: {} },
             },
         ]}
           .computeLabel=${(schema) => {
             const labels = {
                 title: "Title",
+                area: "Area",
                 icon: "Room Icon",
             };
             return labels[schema.name || ""] || schema.name || "";

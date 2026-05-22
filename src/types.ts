@@ -37,6 +37,7 @@ export interface LovelaceCardConfig {
 export interface RoomCardConfig extends LovelaceCardConfig {
   type: string;
   title?: string;
+  area?: string;
   icon?: string;
   icon_color?: string;
   icon_background_color?: string;
