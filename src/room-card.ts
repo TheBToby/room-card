@@ -348,10 +348,11 @@ export class RoomCard extends LitElement implements LovelaceCard {
     }
 
     .room-card__content {
-      padding: 4px 4px 4px 16px;
+      padding: 4px 8px 4px 16px;
       display: flex;
       flex-direction: column;
       position: relative;
+      height: 100px;
       z-index: 2;
     }
 
@@ -401,7 +402,6 @@ export class RoomCard extends LitElement implements LovelaceCard {
       gap: 4px;
       margin-left: 80px;
       padding-top: 18px;
-      min-height: 50px;
     }
 
     /* Column of same-type entities stacked vertically */
@@ -458,6 +458,7 @@ export class RoomCard extends LitElement implements LovelaceCard {
       display: flex;
       align-items: center;
       justify-content: center;
+      opacity: 0.8;
       z-index: 1;
       pointer-events: none;
     }

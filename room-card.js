@@ -383,10 +383,11 @@ RoomCard.styles = i$3 `
     }
 
     .room-card__content {
-      padding: 4px 4px 4px 16px;
+      padding: 4px 8px 4px 16px;
       display: flex;
       flex-direction: column;
       position: relative;
+      height: 100px;
       z-index: 2;
     }
 
@@ -436,7 +437,6 @@ RoomCard.styles = i$3 `
       gap: 4px;
       margin-left: 80px;
       padding-top: 18px;
-      min-height: 50px;
     }
 
     /* Column of same-type entities stacked vertically */
@@ -493,6 +493,7 @@ RoomCard.styles = i$3 `
       display: flex;
       align-items: center;
       justify-content: center;
+      opacity: 0.8;
       z-index: 1;
       pointer-events: none;
     }
