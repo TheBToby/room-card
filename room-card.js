@@ -155,6 +155,10 @@ function colorToCSS(color, fallback) {
     return fallback;
 }
 let RoomCard = RoomCard_1 = class RoomCard extends i {
+    constructor() {
+        super(...arguments);
+        this._clickTimers = new Map();
+    }
     static async getConfigElement() {
         return document.createElement("room-card-editor");
     }
@@ -230,7 +234,20 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
         const entityId = this._getConfigValue(`${type}_entity`);
         if (!entityId)
             return;
-        this._fire("hass-more-info", { entityId });
+        // If there's already a pending click for this type, it's a double-click
+        if (this._clickTimers.has(type)) {
+            // Second click arrived within the window — treat as double-click
+            clearTimeout(this._clickTimers.get(type));
+            this._clickTimers.delete(type);
+            this._handleEntityDblClick(ev, type);
+            return;
+        }
+        // First click — start a timer; if no second click arrives, fire single-click action
+        const timer = setTimeout(() => {
+            this._clickTimers.delete(type);
+            this._fire("hass-more-info", { entityId });
+        }, 250);
+        this._clickTimers.set(type, timer);
     }
     async _handleEntityDblClick(ev, type) {
         ev.stopPropagation();
@@ -276,7 +293,6 @@ let RoomCard = RoomCard_1 = class RoomCard extends i {
         class="entity-status ${active ? "entity-status--active" : ""}"
         style="--status-bg: ${bgColor}; --status-icon-color: ${iconColor}"
         @click=${(e) => this._handleEntityClick(e, type)}
-        @dblclick=${(e) => this._handleEntityDblClick(e, type)}
       >
         <ha-icon icon=${icon}></ha-icon>
       </div>
