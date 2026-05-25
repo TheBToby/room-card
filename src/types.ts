@@ -1,7 +1,15 @@
 // Home Assistant type declarations for custom card development
 
+export interface HassArea {
+  area_id: string;
+  name: string;
+  icon: string | null;
+  picture: string | null;
+}
+
 export interface HomeAssistant {
   states: Record<string, HassEntity>;
+  areas: Record<string, HassArea>;
   callService(
     domain: string,
     service: string,
@@ -36,9 +44,7 @@ export interface LovelaceCardConfig {
 
 export interface RoomCardConfig extends LovelaceCardConfig {
   type: string;
-  title?: string;
   area?: string;
-  icon?: string;
   icon_color?: string;
   icon_background_color?: string;
   tv_entity?: string;

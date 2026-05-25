@@ -37,30 +37,13 @@ export class RoomCardEditor extends LitElement implements LovelaceCardEditor {
           .data=${this._config}
           .schema=${[
             {
-              type: "grid",
-              name: "",
-              flatten: true,
-              schema: [
-                {
-                  name: "title",
-                  selector: { text: {} },
-                },
-                {
-                  name: "area",
-                  selector: { area: {} },
-                },
-              ],
-            },
-            {
-              name: "icon",
-              selector: { icon: {} },
+              name: "area",
+              selector: { area: {} },
             },
           ]}
           .computeLabel=${(schema: { name?: string }) => {
             const labels: Record<string, string> = {
-              title: "Title",
               area: "Area",
-              icon: "Room Icon",
             };
             return labels[schema.name || ""] || schema.name || "";
           }}

@@ -59,7 +59,9 @@ function isActive(entity: HassEntity | undefined, type: string): boolean {
     case "media_player":
       return state === "playing";
     case "climate":
-      return state !== "off" && state !== "unavailable" && state !== "unknown";
+      const setpoint = (entity.attributes.temperature ?? entity.attributes.target_temp_high) as number | undefined;
+      if (!setpoint) return false;
+      return (state !== "off") && (setpoint > 10.0);
     case "light":
       return state === "on";
     default:
@@ -100,8 +102,6 @@ export class RoomCard extends LitElement implements LovelaceCard {
 
   public static getStubConfig(): Record<string, unknown> {
     return {
-      title: "Living Room",
-      icon: "mdi:sofa",
       icon_color: "#ffffff",
       icon_background_color: "#4A90D9",
     };
@@ -295,11 +295,17 @@ export class RoomCard extends LitElement implements LovelaceCard {
       group.types.some((type) => !!this._getConfigValue(`${type}_entity`))
     );
 
+    // Derive room name and icon from the configured HA area
+    const areaId = this._config.area;
+    const area = areaId ? this.hass.areas?.[areaId] : undefined;
+    const areaName = area?.name || "";
+    const areaIcon = area?.icon || "mdi:home-outline";
+
     return html`
       <ha-card class="room-card">
         <div class="room-card__content">
           <header class="room-card__header">
-            <h1 class="room-card__name">${this._config.title || ""}</h1>
+            <h1 class="room-card__name">${areaName}</h1>
           </header>
 
           ${hasAnyEntities
@@ -348,7 +354,7 @@ export class RoomCard extends LitElement implements LovelaceCard {
           style="--icon-bg: ${iconBgColor}; --icon-color: ${iconColor}"
         >
           <ha-icon
-            icon=${(this._getConfigValue("icon") as string) || "mdi:home-outline"}
+            icon=${areaIcon}
           ></ha-icon>
         </div>
       </ha-card>
@@ -364,6 +370,7 @@ export class RoomCard extends LitElement implements LovelaceCard {
       position: relative;
       overflow: hidden;
       border-radius: var(--ha-card-border-radius, 12px);
+      height: 136px;
     }
 
     .room-card__content {
